@@ -41,4 +41,7 @@
 # Editors
 .vscode
 .idea
+
+# Build directory
+build/
 cmake-build-*/

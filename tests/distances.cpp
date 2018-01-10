@@ -1,5 +1,6 @@
-#include <bits/stdc++.h>
-using namespace std;
+#include <iostream>
+#include <memory>
+#include <queue>
 
 int n, m;
 
@@ -11,16 +12,16 @@ short distances[50][50][50][50];
 int dx[8] = {1, 1, 1, 0, -1, -1, -1, 0};
 int dy[8] = {1, 0, -1, -1, -1, 0, 1, 1};
 
-typedef pair<int, int> pii;
+typedef std::pair<int, int> pii;
 
 int main() {
   memset(distances, -1, sizeof(distances));
 
-  cin >> n >> m;
+  std::cin >> n >> m;
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
-      cin >> coll[i][j];
+      std::cin >> coll[i][j];
     }
   }
 
@@ -30,7 +31,7 @@ int main() {
 
       memset(vis, 0, sizeof(vis));
 
-      queue<pii> q;
+      std::queue<pii> q;
 
       q.push(pii(i, j));
       vis[i][j] = true;
@@ -66,5 +67,5 @@ int main() {
     }
   }
 
-  cerr << "Done\n";
+  std::cerr << "Done\n";
 }

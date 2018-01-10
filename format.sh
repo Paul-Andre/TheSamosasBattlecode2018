@@ -70,6 +70,9 @@ elif [[ "${CHANGES_ONLY}" == "true" ]]; then
   CHANGED_FILES="$(git diff --name-only --diff-filter=ACMRT ${REVISION})"
 fi
 
+# Included directories.
+INCLUDED_DIRECTORIES="agents include src tests"
+
 #
 # Clang-Format
 #
@@ -85,14 +88,16 @@ if [[ ${CHANGES_ONLY} == "true" ]]; then
         -e '\.tpp$' \
   )"
 else
-  CLANG_FORMAT_FILES="$(
-    find "${DIR}" \
-      -iname '*.h' -o \
-      -iname '*.c' -o \
-      -iname '*.cpp' -o \
-      -iname '*.hpp' -o \
-      -iname '*.tpp'
-  )"
+  for included_directory in ${INCLUDED_DIRECTORIES}; do
+    CLANG_FORMAT_FILES="${CLANG_FORMAT_FILES} $(
+      find "${DIR}/${included_directory}" \
+        -iname '*.h' -o \
+        -iname '*.c' -o \
+        -iname '*.cpp' -o \
+        -iname '*.hpp' -o \
+        -iname '*.tpp'
+    )"
+  done
 fi
 
 if [[ -n "${CLANG_FORMAT_FILES}" ]]; then
