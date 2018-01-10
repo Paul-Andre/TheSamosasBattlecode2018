@@ -1,15 +1,16 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
 import random
 import sys
 
-n = 50
-m = 50
+N = 50
+M = 50
 
-print(n,m);
+print(N, M)
 
-for _ in range(n):
-    for _ in range(m):
-        sys.stdout.write(random.choice(["0","1"]))
-    print()
-
-
-
+for _ in range(N):
+    for _ in range(M):
+        sys.stdout.write(random.choice(["0", "1"]))
+    print("")
