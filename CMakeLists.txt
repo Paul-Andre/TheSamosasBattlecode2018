@@ -20,10 +20,5 @@ include_directories(
 file(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_library(engine ${SOURCES})
 
-# Earth agent.
-add_executable(earth-agent "${PROJECT_SOURCE_DIR}/agents/earth.cpp")
-add_dependencies(earth-agent engine)
-
-# Mars agent.
-add_executable(mars-agent "${PROJECT_SOURCE_DIR}/agents/mars.cpp")
-add_dependencies(mars-agent engine)
+add_executable(agent "${PROJECT_SOURCE_DIR}/agent/main.cpp")
+add_dependencies(agent engine)
