@@ -3,23 +3,11 @@ Battlecode 2018
 This is our submission to MIT's 2018 [Battlecode](http://battlecode.org/) programming
 competition.
 
-Building
---------
-
-```bash
-mkdir build
-cd build
-cmake ..
-make
-```
-
 Running
 -------
-After building simply run:
-
-```bash
-./build/agent
-```
+Simply clone this repository into the
+[bc18-scaffold](https://github.com/battlecode/bc18-scaffold) repository, and
+run the `scaffold`'s `run.sh`.
 
 Linting
 -------
