@@ -18,13 +18,7 @@ Running
 After building simply run:
 
 ```bash
-./build/earth-agent
-```
-
-and
-
-```bash
-./build/mars-agent
+./build/agent
 ```
 
 Linting
