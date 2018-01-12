@@ -71,7 +71,7 @@ elif [[ "${CHANGES_ONLY}" == "true" ]]; then
 fi
 
 # Included directories.
-INCLUDED_DIRECTORIES="agent include src tests"
+INCLUDED_DIRECTORIES="include lib src tests"
 
 #
 # Clang-Format

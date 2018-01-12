@@ -9,6 +9,9 @@ Simply clone this repository into the
 [bc18-scaffold](https://github.com/battlecode/bc18-scaffold) repository, and
 run the `scaffold`'s `run.sh` or `run_nodocker.sh`.
 
+*Note*: You should `make clean` when switching between the docker and
+docker-less environments.
+
 Linting
 -------
 We use [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to format
