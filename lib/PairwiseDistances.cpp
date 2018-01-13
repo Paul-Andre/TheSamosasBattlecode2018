@@ -1,4 +1,4 @@
-#include "distances.hpp"
+#include "PairwiseDistances.hpp"
 
 #include <cassert>
 #include <cstdlib>
