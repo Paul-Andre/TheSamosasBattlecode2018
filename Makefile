@@ -27,6 +27,8 @@ endif
 
 all: build $(BUILD)/Makefile.dep $(BUILD)/$(TARGET)
 
+-include $(BUILD)/Makefile.dep
+
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -o $@ -c $<
