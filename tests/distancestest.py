@@ -5,8 +5,8 @@ from __future__ import print_function
 import random
 import sys
 
-N = 50
-M = 50
+N = 10
+M = 10
 
 print(N, M)
 
