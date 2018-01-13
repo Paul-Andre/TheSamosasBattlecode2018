@@ -25,7 +25,7 @@ struct PairwiseDistances {
     assert(n <= MAX_MAP_SIZE);
     assert(m <= MAX_MAP_SIZE);
 
-    bool vis[50][50];
+    bool visited[MAX_MAP_SIZE][MAX_MAP_SIZE];
 
     int dx[8] = {1, 1, 1, 0, -1, -1, -1, 0};
     int dy[8] = {1, 0, -1, -1, -1, 0, 1, 1};
@@ -36,12 +36,12 @@ struct PairwiseDistances {
       for (int j = 0; j < m; j++) {
         if (coll[i][j]) continue;
 
-        memset(vis, 0, sizeof(vis));
+        memset(visited, 0, sizeof(visited));
 
         std::queue<pii> q;
 
         q.push(pii(i, j));
-        vis[i][j] = true;
+        visited[i][j] = true;
 
         short dist = 0;
 
@@ -61,7 +61,7 @@ struct PairwiseDistances {
               int x = ii + dx[k];
               int y = jj + dy[k];
 
-              if (x >= 0 && x < n && y >= 0 && y < m && !vis[x][y] &&
+              if (x >= 0 && x < n && y >= 0 && y < m && !visited[x][y] &&
                   !coll[x][y]) {
                 q.push(pii(x, y));
                 vis[x][y] = true;
@@ -75,7 +75,7 @@ struct PairwiseDistances {
     }
   }
 
-  short get_distance(MapLocation &A, MapLocation &B) {
+  short get_distance(MapLocation &A, MapLocation &B) const {
     return distances[A.get_x()][A.get_y()][B.get_x()][B.get_y()];
   }
 };
