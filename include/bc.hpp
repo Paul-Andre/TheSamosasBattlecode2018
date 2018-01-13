@@ -601,11 +601,11 @@ class Unit {
 
   UnitType get_unit_type() const { return m_unit_type; }
 
-  // NOT IMPLEMENT: bc_Unit_research_level
+// NOT IMPLEMENT: bc_Unit_research_level
 
-  // FIXME: Don't use macros. Write better function names!
+// FIXME: Don't use macros. Write better function names!
 
-  // Magic!
+// Magic!
 #define F(x) bc_Unit_##x
 #define G(x) get_##x
 #define GET(ret, var)                                  \

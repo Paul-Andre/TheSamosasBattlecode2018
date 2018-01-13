@@ -16,5 +16,5 @@ struct PairwiseDistances {
   /// Takes a collision map `coll`
   PairwiseDistances(vector<vector<bool>> &coll);
 
-  short get_distance(MapLocation &A, MapLocation &B) const ;
+  short get_distance(MapLocation &A, MapLocation &B) const;
 };
