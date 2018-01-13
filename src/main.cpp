@@ -32,7 +32,6 @@ int main() {
     for (size_t i = 0; i < units.size(); i++) {
       Unit &unit = units[i];
 
-      cout << "replicate and then move\n";
       // Calls on the controller take unit IDs for ownership reasons.
       uint16_t id = unit.get_id();
       Direction random_direction = Direction(rand() % 8);
