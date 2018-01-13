@@ -1,6 +1,6 @@
-#include <iostream>
-#include <cstdio>
 #include <cassert>
+#include <cstdio>
+#include <iostream>
 #include "../include/bc.hpp"
 
 using namespace std;
@@ -25,7 +25,8 @@ int main() {
     uint32_t round = gc.get_round();
     printf("Round: %d\n", round);
 
-    // Note that all operations perform copies out of their data structures, returning new objects.
+    // Note that all operations perform copies out of their data structures,
+    // returning new objects.
     vector<Unit> units = gc.get_my_units();
 
     for (size_t i = 0; i < units.size(); i++) {
@@ -43,7 +44,6 @@ int main() {
       if (gc.can_move(id, random_direction) && gc.is_move_ready(id)) {
         gc.move_robot(id, random_direction);
       }
-
     }
 
     fflush(stdout);
