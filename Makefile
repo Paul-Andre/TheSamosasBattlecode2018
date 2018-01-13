@@ -7,7 +7,7 @@ CXX      := -g++
 CXXFLAGS := -std=c++14 -O2
 CXXFLAGS += -DBACKTRACE
 CXXFLAGS += -pedantic-errors -Wall
-CXXFLAGS += -Wno-pessimizing-move -Wno-keyword-macro
+CXXFLAGS += -Wno-keyword-macro -Wno-pessimizing-move -Wno-unused-function
 
 LDFLAGS  := -L../battlecode/c/lib -lm -lc
 INCLUDE  := -I../battlecode/c/include -Iinclude

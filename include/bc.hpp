@@ -45,7 +45,7 @@ namespace bc {
 #include <signal.h>
 #include <unistd.h>
 
-void print_trace() {
+static void print_trace() {
   fflush(stdout);
   void* array[10];
   size_t size;
@@ -84,7 +84,7 @@ void print_trace() { printf("Compile with -DBACKTRACE to see a backtrace\n"); }
 
 #endif
 
-bool clear_error() {
+static bool clear_error() {
   if (bc_has_err()) {
     char* err;
     bc_get_last_err(&err);
@@ -99,14 +99,14 @@ bool clear_error() {
 #define VEC_LEN(x) x##_len
 #define VEC_INDEX(x) x##_index
 #define VEC_DEL(x) delete_##x
-#define VEC(dest, orig)                          \
-  std::vector<dest> to_vector(orig* vec) {       \
-    std::vector<dest> ans;                       \
-    size_t len = VEC_LEN(orig)(vec);             \
-    for (size_t i = 0; i < len; i++)             \
-      ans.emplace_back(VEC_INDEX(orig)(vec, i)); \
-    VEC_DEL(orig)(vec);                          \
-    return ans;                                  \
+#define VEC(dest, orig)                           \
+  static std::vector<dest> to_vector(orig* vec) { \
+    std::vector<dest> ans;                        \
+    size_t len = VEC_LEN(orig)(vec);              \
+    for (size_t i = 0; i < len; i++)              \
+      ans.emplace_back(VEC_INDEX(orig)(vec, i));  \
+    VEC_DEL(orig)(vec);                           \
+    return ans;                                   \
   }
 
 /** @cond PRIVATE */
@@ -116,10 +116,12 @@ struct Deleter {
     if (loc) F(loc);
   }
 };
+/** @endcond */
 
 /** @cond PRIVATE */
 template <class T, void (*F)(T*)>
 using UniquePtr = std::unique_ptr<T, Deleter<T, F>>;
+/** @endcond */
 
 /** @cond PRIVATE
  * Veci32
@@ -136,14 +138,14 @@ using Planet = bc_Planet;
  * @param planet
  * @return the other planet
  */
-Planet planet_other(Planet planet) { return bc_Planet_other(planet); }
+inline Planet planet_other(Planet planet) { return bc_Planet_other(planet); }
 
 /**
  * Create a human-readable representation of a Planet
  * @param planet
  * @return the human-readable string
  */
-std::string to_string(Planet planet) { return bc_Planet_debug(planet); }
+inline std::string to_string(Planet planet) { return bc_Planet_debug(planet); }
 
 // Direction
 using Direction = bc_Direction;
@@ -155,21 +157,25 @@ using Direction = bc_Direction;
  * @param direction
  * @return the x displacement
  */
-int direction_dx(Direction direction) { return bc_Direction_dx(direction); }
+inline int direction_dx(Direction direction) {
+  return bc_Direction_dx(direction);
+}
 
 /**
  * Returns the y displacement of this direction.
  * @param direction
  * @return the y displacement
  */
-int direction_dy(Direction direction) { return bc_Direction_dy(direction); }
+inline int direction_dy(Direction direction) {
+  return bc_Direction_dy(direction);
+}
 
 /**
  * Returns whether this direction is a diagonal one.
  * @param direction
  * @return bool if the direction is diagonal or not
  */
-bool direction_is_diagonal(Direction direction) {
+inline bool direction_is_diagonal(Direction direction) {
   return bc_Direction_is_diagonal(direction);
 }
 
@@ -178,7 +184,7 @@ bool direction_is_diagonal(Direction direction) {
  * @param direction
  * @return the opposite direction
  */
-Direction direction_opposite(Direction direction) {
+inline Direction direction_opposite(Direction direction) {
   return bc_Direction_opposite(direction);
 }
 
@@ -188,7 +194,7 @@ Direction direction_opposite(Direction direction) {
  * @param direction
  * @return the direction 45 degrees to the left
  */
-Direction direction_rotate_left(Direction direction) {
+inline Direction direction_rotate_left(Direction direction) {
   return bc_Direction_rotate_left(direction);
 }
 
@@ -198,7 +204,7 @@ Direction direction_rotate_left(Direction direction) {
  * @param direction
  * @return the direction 45 degrees to the right
  */
-Direction direction_rotate_right(Direction direction) {
+inline Direction direction_rotate_right(Direction direction) {
   return bc_Direction_rotate_right(direction);
 }
 
@@ -214,7 +220,7 @@ class MapLocation {
   /**
    *  Empty Constructor
    */
-  MapLocation() : m_map_location{nullptr} {}
+  MapLocation() {}
 
   /**
    *  Constructor
@@ -532,21 +538,21 @@ VEC(unsigned, bc_VecUnitID)
 using UnitType = bc_UnitType;
 
 /*  */
-bool is_structure(UnitType unit_type) {
+inline bool is_structure(UnitType unit_type) {
   return unit_type == Factory or unit_type == Rocket;
 }
 /*  */
-bool is_robot(UnitType unit_type) { return !is_structure(unit_type); }
+inline bool is_robot(UnitType unit_type) { return !is_structure(unit_type); }
 
 /*  */
-unsigned unit_type_get_factory_cost(UnitType unit_type) {
+static unsigned unit_type_get_factory_cost(UnitType unit_type) {
   unsigned ans = bc_UnitType_factory_cost(unit_type);
   CHECK_ERRORS();
   return ans;
 }
 
 /*  */
-unsigned unit_type_get_blueprint_cost(UnitType unit_type) {
+static unsigned unit_type_get_blueprint_cost(UnitType unit_type) {
   unsigned ans = bc_UnitType_blueprint_cost(unit_type);
   CHECK_ERRORS();
   return ans;
@@ -554,14 +560,14 @@ unsigned unit_type_get_blueprint_cost(UnitType unit_type) {
 
 // Don't need to receive UnitType as C API, because it makes no sense...
 /*  */
-unsigned unit_type_get_replicate_cost() {
+static unsigned unit_type_get_replicate_cost() {
   unsigned ans = bc_UnitType_replicate_cost(Worker);
   CHECK_ERRORS();
   return ans;
 }
 
 /*  */
-unsigned unit_type_get_value(UnitType unit_type) {
+inline unsigned unit_type_get_value(UnitType unit_type) {
   return bc_UnitType_value(unit_type);
 }
 
@@ -575,6 +581,8 @@ VEC(UnitType, bc_VecUnitType)
 // Unit
 class Unit {
  public:
+  Unit() {}
+
   explicit Unit(bc_Unit* unit) : m_unit{unit} {
     log_error(unit, "Null bc_Unit!");
     m_unit_type = bc_Unit_unit_type(unit);
@@ -700,7 +708,7 @@ VEC(Unit, bc_VecUnit)
 // PlanetMap
 class PlanetMap {
  public:
-  PlanetMap() : m_planet_map{nullptr} {}
+  PlanetMap() {}
 
   PlanetMap(bc_PlanetMap* planet_map) : m_planet_map{planet_map} {
     log_error(planet_map, "Null bc_PlanetMap!");
@@ -1039,19 +1047,19 @@ class GameController {
     return to_vector(bc_GameController_units_in_space(m_gc));
   }
 
-  unsigned get_karbonite_at(MapLocation map_location) const {
+  unsigned get_karbonite_at(const MapLocation& map_location) const {
     unsigned val = bc_GameController_karbonite_at(m_gc, map_location.get_bc());
     CHECK_ERRORS();
     return val;
   }
 
   std::vector<MapLocation> get_all_locations_within(
-      MapLocation map_location, unsigned radius_squared) const {
+      const MapLocation& map_location, unsigned radius_squared) const {
     return to_vector(bc_GameController_all_locations_within(
         m_gc, map_location.get_bc(), radius_squared));
   }
 
-  bool can_sense_location(MapLocation map_location) const {
+  bool can_sense_location(const MapLocation& map_location) const {
     return bc_GameController_can_sense_location(m_gc, map_location.get_bc());
   }
 
@@ -1059,32 +1067,32 @@ class GameController {
     return bc_GameController_can_sense_unit(m_gc, id);
   }
 
-  std::vector<Unit> sense_nearby_units(MapLocation map_location,
+  std::vector<Unit> sense_nearby_units(const MapLocation& map_location,
                                        unsigned radius_squared) const {
     return to_vector(bc_GameController_sense_nearby_units(
         m_gc, map_location.get_bc(), radius_squared));
   }
 
-  std::vector<Unit> sense_nearby_units_by_team(MapLocation map_location,
+  std::vector<Unit> sense_nearby_units_by_team(const MapLocation& map_location,
                                                unsigned radius_squared,
                                                Team team) const {
     return to_vector(bc_GameController_sense_nearby_units_by_team(
         m_gc, map_location.get_bc(), radius_squared, team));
   }
 
-  std::vector<Unit> sense_nearby_units_by_type(MapLocation map_location,
+  std::vector<Unit> sense_nearby_units_by_type(const MapLocation& map_location,
                                                unsigned radius_squared,
                                                UnitType type) const {
     return to_vector(bc_GameController_sense_nearby_units_by_type(
         m_gc, map_location.get_bc(), radius_squared, type));
   }
 
-  bool has_unit_at_location(MapLocation map_location) const {
+  bool has_unit_at_location(const MapLocation& map_location) const {
     return bc_GameController_has_unit_at_location(m_gc, map_location.get_bc());
   }
 
   // XXX: Only use if after has_unit_at_location! Might crash if not
-  Unit sense_unit_at_location(MapLocation map_location) const {
+  Unit sense_unit_at_location(const MapLocation& map_location) const {
     auto ans =
         bc_GameController_sense_unit_at_location(m_gc, map_location.get_bc());
     CHECK_ERRORS();
@@ -1114,7 +1122,7 @@ class GameController {
     CHECK_ERRORS();
   }
 
-  bool is_occupiable(MapLocation map_location) const {
+  bool is_occupiable(const MapLocation& map_location) const {
     auto ans = bc_GameController_is_occupiable(m_gc, map_location.get_bc());
     CHECK_ERRORS();
     return ans;
@@ -1215,17 +1223,19 @@ class GameController {
     CHECK_ERRORS();
   }
 
-  bool can_begin_snipe(unsigned ranger_id, MapLocation map_location) const {
+  bool can_begin_snipe(unsigned ranger_id,
+                       const MapLocation& map_location) const {
     return bc_GameController_can_begin_snipe(m_gc, ranger_id,
                                              map_location.get_bc());
   }
 
-  void begin_snipe(unsigned ranger_id, MapLocation map_location) const {
+  void begin_snipe(unsigned ranger_id, const MapLocation& map_location) const {
     bc_GameController_begin_snipe(m_gc, ranger_id, map_location.get_bc());
     CHECK_ERRORS();
   }
 
-  bool can_begin_blink(unsigned mage_id, MapLocation map_location) const {
+  bool can_begin_blink(unsigned mage_id,
+                       const MapLocation& map_location) const {
     return bc_GameController_can_blink(m_gc, mage_id, map_location.get_bc());
   }
 
@@ -1233,7 +1243,7 @@ class GameController {
     return bc_GameController_is_blink_ready(m_gc, mage_id);
   }
 
-  void blink(unsigned mage_id, MapLocation map_location) const {
+  void blink(unsigned mage_id, const MapLocation& map_location) const {
     bc_GameController_blink(m_gc, mage_id, map_location.get_bc());
     CHECK_ERRORS();
   }
@@ -1291,12 +1301,14 @@ class GameController {
     return RocketLandingInfo{bc_GameController_rocket_landings(m_gc)};
   }
 
-  bool can_launch_rocket(unsigned rocket_id, MapLocation map_location) const {
+  bool can_launch_rocket(unsigned rocket_id,
+                         const MapLocation& map_location) const {
     return bc_GameController_can_launch_rocket(m_gc, rocket_id,
                                                map_location.get_bc());
   }
 
-  void launch_rocket(unsigned rocket_id, MapLocation map_location) const {
+  void launch_rocket(unsigned rocket_id,
+                     const MapLocation& map_location) const {
     bc_GameController_launch_rocket(m_gc, rocket_id, map_location.get_bc());
     CHECK_ERRORS();
   }
