@@ -1,7 +1,7 @@
-#include <iostream>
-#include <memory>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <memory>
 #include <queue>
 
 using namespace std;
@@ -25,9 +25,9 @@ int main() {
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
-      char in ;
+      char in;
       cin >> in;
-      coll[i][j] = (in!='0');
+      coll[i][j] = (in != '0');
     }
   }
 
@@ -77,18 +77,19 @@ int main() {
     for (int j = 0; j < m; j++) {
       cout << coll[i][j] << " ";
     }
-    cout <<endl;
+    cout << endl;
   }
 
-  cout <<endl;
+  cout << endl;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
-      if (distances[i][j][2][2] == -1) cout << "* ";
-      else cout << distances[i][j][2][2] << " ";
+      if (distances[i][j][2][2] == -1)
+        cout << "* ";
+      else
+        cout << distances[i][j][2][2] << " ";
     }
-    cout <<endl;
+    cout << endl;
   }
-
 
   std::cerr << "Done\n";
 }

@@ -1,28 +1,27 @@
 #pragma once
-#include "bc.hpp"
-#include <vector>
-#include <memory>
+
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <queue>
-#include <cassert>
+#include <vector>
+#include "bc.hpp"
+
 using namespace bc;
 using namespace std;
 
-
-
 constexpr int MAX_MAP_SIZE = 50;
 
-typedef std::pair<int, int> pii;
-
 struct PairwiseDistances {
-  short distances[MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE];
-  
-  /// Takes a collision map `coll`
-  PairwiseDistances(vector<vector<bool> > &coll) {
+  typedef std::pair<int, int> pii;
 
-    int n = (int) coll.size();
-    int m = (int) coll[0].size();
+  short distances[MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE];
+
+  /// Takes a collision map `coll`
+  PairwiseDistances(vector<vector<bool>> &coll) {
+    int n = (int)coll.size();
+    int m = (int)coll[0].size();
     assert(n <= MAX_MAP_SIZE);
     assert(m <= MAX_MAP_SIZE);
 
@@ -47,7 +46,6 @@ struct PairwiseDistances {
         short dist = 0;
 
         while (!q.empty()) {
-
           size_t size = q.size();
 
           for (size_t qi = 0; qi < size; qi++) {
@@ -78,11 +76,6 @@ struct PairwiseDistances {
   }
 
   short get_distance(MapLocation &A, MapLocation &B) {
-    return 12312;
     return distances[A.get_x()][A.get_y()][B.get_x()][B.get_y()];
   }
 };
-
-
-
-

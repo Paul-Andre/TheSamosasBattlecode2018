@@ -25,9 +25,7 @@ ifeq ($(UNAME_S), Darwin)
 	LDFLAGS += -lbattlecode-darwin -lSystem -lresolv
 endif
 
-all: build $(BUILD)/$(TARGET)
-
--include $(BUILD)/Makefile.dep
+all: build $(BUILD)/Makefile.dep $(BUILD)/$(TARGET)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(@D)
@@ -38,9 +36,10 @@ $(BUILD)/$(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS) -o $(BUILD)/$(TARGET)
 
 $(BUILD)/Makefile.dep: $(SRC)
-	@echo "Depend"
 	@mkdir -p $(@D)
-	@for i in $(^); do $(CXX) $(CXXFLAGS) $(INCLUDE)  -MM "$${i}" -MT $(OBJ_DIR)/$${i%.*}.o; done > $@
+	@for i in $(^); do \
+		$(CXX) $(CXXFLAGS) $(INCLUDE) -MM "$${i}" -MT $(OBJ_DIR)/$${i%.*}.o; \
+	done > $@
 
 .PHONY: all build clean depend
 
@@ -49,5 +48,3 @@ build:
 
 clean:
 	-rm -rf $(BUILD)
-
-
