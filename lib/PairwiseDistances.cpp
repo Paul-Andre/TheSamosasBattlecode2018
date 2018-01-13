@@ -9,9 +9,9 @@
 using namespace bc;
 using namespace std;
 
-PairwiseDistances::PairwiseDistances(vector<vector<bool>> &coll) {
-  int n = (int)coll.size();
-  int m = (int)coll[0].size();
+PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
+  int n = (int)passable_terrain.size();
+  int m = (int)passable_terrain[0].size();
   assert(n <= MAX_MAP_SIZE);
   assert(m <= MAX_MAP_SIZE);
 
@@ -24,7 +24,7 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &coll) {
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
-      if (coll[i][j]) continue;
+      if (!passable_terrain[i][j]) continue;
 
       memset(visited, 0, sizeof(visited));
 
@@ -52,7 +52,7 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &coll) {
             int y = jj + dy[k];
 
             if (x >= 0 && x < n && y >= 0 && y < m && !visited[x][y] &&
-                !coll[x][y]) {
+                passable_terrain[x][y]) {
               q.push(pii(x, y));
               visited[x][y] = true;
             }

@@ -23,10 +23,12 @@ int main() {
   printf("Connected!\n");
 
   MapInfo map_info(gc.get_starting_planet(gc.get_planet()));
+  PairwiseDistances distances(map_info.passable_terrain);
 
   // loop through the whole game.
   while (true) {
     uint32_t round = gc.get_round();
+    map_info.update_karbonite(gc);
     printf("Round: %d\n", round);
 
     // Note that all operations perform copies out of their data structures,

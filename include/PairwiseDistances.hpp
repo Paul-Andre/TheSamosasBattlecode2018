@@ -14,7 +14,7 @@ struct PairwiseDistances {
   short distances[MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE];
 
   /// Takes a collision map `coll`
-  PairwiseDistances(vector<vector<bool>> &coll);
+  PairwiseDistances(vector<vector<bool>> &passable_terrain);
 
   short get_distance(MapLocation &A, MapLocation &B) const;
 };
