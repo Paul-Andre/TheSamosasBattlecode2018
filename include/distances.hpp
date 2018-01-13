@@ -64,7 +64,7 @@ struct PairwiseDistances {
               if (x >= 0 && x < n && y >= 0 && y < m && !visited[x][y] &&
                   !coll[x][y]) {
                 q.push(pii(x, y));
-                vis[x][y] = true;
+                visited[x][y] = true;
               }
             }
           }
