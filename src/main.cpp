@@ -1,7 +1,9 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
-#include "../include/bc.hpp"
+#include "MapInfo.hpp"
+#include "PairwiseDistances.hpp"
+#include "bc.hpp"
 
 using namespace std;
 using namespace bc;
@@ -19,6 +21,8 @@ int main() {
   GameController gc;
 
   printf("Connected!\n");
+
+  MapInfo map_info(gc.get_starting_planet(gc.get_planet()));
 
   // loop through the whole game.
   while (true) {
