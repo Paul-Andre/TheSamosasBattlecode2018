@@ -58,7 +58,9 @@ static void print_trace() {
   exit(1);
 }
 #else
-void print_trace() { printf("Compile with -DBACKTRACE to see a backtrace\n"); }
+static void print_trace() {
+  printf("Compile with -DBACKTRACE to see a backtrace\n");
+}
 #endif
 
 #define S(x) #x
@@ -586,11 +588,13 @@ class Unit {
   explicit Unit(bc_Unit* unit) : m_unit{unit} {
     log_error(unit, "Null bc_Unit!");
     m_unit_type = bc_Unit_unit_type(unit);
+    m_id = bc_Unit_id(unit);
   }
 
   Unit(const Unit& unit)
       : m_unit{bc_Unit_clone(unit.m_unit.get())},
-        m_unit_type{bc_Unit_unit_type(unit.m_unit.get())} {}
+        m_unit_type{bc_Unit_unit_type(unit.m_unit.get())},
+        m_id{bc_Unit_id(unit.m_unit.get())} {}
   Unit(Unit&& unit) = default;
 
   Unit& operator=(const Unit& unit) {
@@ -635,7 +639,8 @@ class Unit {
   }
 
   // All units
-  GET(unsigned, id);
+  // GET(unsigned, id);
+  unsigned get_id() const { return m_id; }
   GET(unsigned, health);
   GET(unsigned, max_health);
   GET(unsigned, vision_range);
@@ -691,11 +696,18 @@ class Unit {
   GET(int, rocket_blast_damage);
   GET(unsigned, rocket_travel_time_decrease);
 
+  // C++ API
+  bool is_structure() const {
+    return m_unit_type == Factory or m_unit_type == Rocket;
+  }
+  bool is_robot() const { return !is_structure(); }
+
   // private:
   UniquePtr<bc_Unit, delete_bc_Unit> m_unit;
 
-  // XXX: Stored because it's used for every assertion
+  // XXX: Stored for cache reasons
   UnitType m_unit_type;
+  unsigned m_id;
 };
 
 /** @cond PRIVATE
@@ -749,8 +761,8 @@ class PlanetMap {
   */
 
   bool is_on_map(const MapLocation& location) const {
-    return (location.get_x() < (int)m_width) and
-           (location.get_y() < (int)m_height) and
+    return (location.get_x() >= 0 and location.get_x() < (int)m_width) and
+           (location.get_y() >= 0 and location.get_y() < (int)m_height) and
            (location.get_planet() == m_planet);
   }
 
@@ -783,7 +795,7 @@ class PlanetMap {
 
     for (int i = 0; i < (int)m_height; i++) {
       for (int j = 0; j < (int)m_width; j++) {
-        MapLocation mp{m_planet, i, j};
+        MapLocation mp{m_planet, j, i};
         bool passable = bc_PlanetMap_is_passable_terrain_at(m_planet_map.get(),
                                                             mp.get_bc());
         auto karbonite =
