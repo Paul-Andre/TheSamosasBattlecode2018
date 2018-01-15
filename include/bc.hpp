@@ -44,6 +44,7 @@ namespace bc {
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
+#include <cassert>
 
 static void print_trace() {
   fflush(stdout);

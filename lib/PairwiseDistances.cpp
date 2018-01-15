@@ -1,8 +1,8 @@
 #include "PairwiseDistances.hpp"
-
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <memory>
 #include <queue>
 
@@ -14,6 +14,8 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
   assert(distances != nullptr);
   int n = (int)passable_terrain.size();
   int m = (int)passable_terrain[0].size();
+  width = n;
+  height = m;
   assert(n <= MAX_MAP_SIZE);
   assert(m <= MAX_MAP_SIZE);
 
@@ -42,7 +44,7 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
       q.push(pii(i, j));
       visited[i][j] = true;
 
-      short dist = 0;
+      unsigned short dist = 0;
 
       while (!q.empty()) {
         size_t size = q.size();
@@ -74,8 +76,21 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
   }
 }
 
-short PairwiseDistances::get_distance(MapLocation &A, MapLocation &B) const {
-  return (*distances)[A.get_x()][A.get_y()][B.get_x()][B.get_y()];
+unsigned short PairwiseDistances::get_distance(int ax, int ay, int bx,
+                                               int by) const {
+  if ((ax < 0 || ax >= width || ay < 0 || ay >= height) ||
+      (bx < 0 || bx >= width || by < 0 || by >= height)) {
+    return std::numeric_limits<unsigned short>::max();
+  }
+  return (*distances)[ax][ay][bx][by];
+}
+unsigned short PairwiseDistances::get_distance(MapLocation &A,
+                                               MapLocation &B) const {
+  int ax = A.get_x();
+  int ay = A.get_y();
+  int bx = B.get_x();
+  int by = B.get_y();
+  return get_distance(ax, ay, bx, by);
 }
 
 PairwiseDistances::~PairwiseDistances() { free(distances); }
