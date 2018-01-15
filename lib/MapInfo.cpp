@@ -1,4 +1,5 @@
 #include "MapInfo.hpp"
+#include <bc.h>
 
 using namespace std;
 using namespace bc;
@@ -8,13 +9,16 @@ MapInfo::MapInfo(const PlanetMap &map)
       height((int)map.get_height()),
       planet(map.get_planet()),
       karbonite(width, vector<unsigned>(height)),
-      passable_terrain(width, vector<bool>(height)) {
+      passable_terrain(width, vector<bool>(height)),
+      location(width, vector<bc_MapLocation *>(height)) {
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
-      MapLocation mp{map.get_planet(), i, j};
+      MapLocation mp{planet, i, j};
 
       karbonite[i][j] = map.get_initial_karbonite_at(mp);
       passable_terrain[i][j] = map.is_passable_terrain_at(mp);
+
+      location[i][j] = new_bc_MapLocation(planet, i, j);
     }
   }
 }
@@ -22,10 +26,9 @@ MapInfo::MapInfo(const PlanetMap &map)
 void MapInfo::update_karbonite(const GameController &gc) {
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
-      MapLocation mp{planet, i, j};
-
-      if (gc.can_sense_location(mp)) {
-        karbonite[i][j] = gc.get_karbonite_at(mp);
+      bc_MapLocation *mp = location[i][j];
+      if (bc_GameController_can_sense_location(gc.m_gc, mp)) {
+        karbonite[i][j] = bc_GameController_karbonite_at(gc.m_gc, mp);
       }
     }
   }

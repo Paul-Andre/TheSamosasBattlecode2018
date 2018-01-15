@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdio>
+#include <ctime>
 #include <iostream>
 #include "MapInfo.hpp"
 #include "PairwiseDistances.hpp"
@@ -23,13 +24,24 @@ int main() {
   printf("Connected!\n");
 
   MapInfo map_info(gc.get_starting_planet(gc.get_planet()));
+  int start_s = clock();
   PairwiseDistances distances(map_info.passable_terrain);
+  int stop_s = clock();
+  cout << "Analyzing map took "
+       << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << " milliseconds"
+       << endl;
 
   // loop through the whole game.
   while (true) {
     uint32_t round = gc.get_round();
+    printf("Round: %d. \n", round);
+
+    int start_s = clock();
     map_info.update_karbonite(gc);
-    printf("Round: %d\n", round);
+    int stop_s = clock();
+    cout << "getting karbonite took"
+         << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
+         << " milliseconds" << endl;
 
     // Note that all operations perform copies out of their data structures,
     // returning new objects.

@@ -10,21 +10,30 @@ using namespace bc;
 using namespace std;
 
 PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
+  distances = (HugeArray *)malloc(sizeof(HugeArray));
+  assert(distances != nullptr);
   int n = (int)passable_terrain.size();
   int m = (int)passable_terrain[0].size();
   assert(n <= MAX_MAP_SIZE);
   assert(m <= MAX_MAP_SIZE);
+
+  bool pass[MAX_MAP_SIZE][MAX_MAP_SIZE];
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      pass[i][j] = passable_terrain[i][j];
+    }
+  }
 
   bool visited[MAX_MAP_SIZE][MAX_MAP_SIZE];
 
   int dx[8] = {1, 1, 1, 0, -1, -1, -1, 0};
   int dy[8] = {1, 0, -1, -1, -1, 0, 1, 1};
 
-  memset(distances, -1, sizeof(distances));
+  memset(distances, -1, sizeof(*distances));
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
-      if (!passable_terrain[i][j]) continue;
+      if (!pass[i][j]) continue;
 
       memset(visited, 0, sizeof(visited));
 
@@ -45,14 +54,14 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
           int ii = current.first;
           int jj = current.second;
 
-          distances[i][j][ii][jj] = dist;
+          (*distances)[i][j][ii][jj] = dist;
 
           for (int k = 0; k < 8; k++) {
             int x = ii + dx[k];
             int y = jj + dy[k];
 
             if (x >= 0 && x < n && y >= 0 && y < m && !visited[x][y] &&
-                passable_terrain[x][y]) {
+                pass[x][y]) {
               q.push(pii(x, y));
               visited[x][y] = true;
             }
@@ -66,5 +75,7 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
 }
 
 short PairwiseDistances::get_distance(MapLocation &A, MapLocation &B) const {
-  return distances[A.get_x()][A.get_y()][B.get_x()][B.get_y()];
+  return (*distances)[A.get_x()][A.get_y()][B.get_x()][B.get_y()];
 }
+
+PairwiseDistances::~PairwiseDistances() { free(distances); }

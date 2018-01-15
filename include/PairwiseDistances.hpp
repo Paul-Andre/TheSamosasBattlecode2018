@@ -10,11 +10,15 @@ constexpr int MAX_MAP_SIZE = 50;
 
 struct PairwiseDistances {
   typedef std::pair<int, int> pii;
+  typedef short HugeArray[MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE]
+                         [MAX_MAP_SIZE];
 
-  short distances[MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE][MAX_MAP_SIZE];
+  HugeArray *distances;
 
   /// Takes a collision map `coll`
   PairwiseDistances(vector<vector<bool>> &passable_terrain);
 
   short get_distance(MapLocation &A, MapLocation &B) const;
+
+  ~PairwiseDistances();
 };

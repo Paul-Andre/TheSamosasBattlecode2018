@@ -13,6 +13,7 @@ struct MapInfo {
   Planet planet;
   vector<vector<unsigned>> karbonite;
   vector<vector<bool>> passable_terrain;
+  vector<vector<bc_MapLocation *>> location;
 
   MapInfo(const PlanetMap &map);
 
