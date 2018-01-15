@@ -50,11 +50,13 @@ int main() {
   }
 
   // First thing get some research going
-  gc.queue_research(UnitType::Ranger);  // Faster ranger
-  gc.queue_research(UnitType::Worker);  // One more karbonite per worker
-  gc.queue_research(UnitType::Ranger);  // Larger ranger vision
-  gc.queue_research(UnitType::Rocket);  // To the moon
-  gc.queue_research(UnitType::Ranger);  // Snipe
+  if (gc.get_planet() == Earth) {
+    gc.queue_research(UnitType::Ranger);  // Faster ranger
+    gc.queue_research(UnitType::Worker);  // One more karbonite per worker
+    gc.queue_research(UnitType::Ranger);  // Larger ranger vision
+    gc.queue_research(UnitType::Rocket);  // To the moon
+    gc.queue_research(UnitType::Ranger);  // Snipe
+  }
 
   // loop through the whole game.
   while (true) {
