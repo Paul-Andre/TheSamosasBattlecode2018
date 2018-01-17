@@ -26,14 +26,18 @@ Direction silly_pathfinding(GameController &gc, MapLocation &start,
     v.push_back(make_pair(make_pair(pd.get_distance(x, y, xx, yy), rand()), k));
   }
 
+  auto current = v[8].first.first;
   sort(v.begin(), v.end());
 
   for (int i = 0; i < 9; i++) {
+    auto next = v[i].first.first;
     Direction dir = Direction(v[i].second);
     MapLocation new_location = start.add(dir);
-    if (gc.can_sense_location(new_location) && gc.is_occupiable(new_location)) {
+    if (gc.can_sense_location(new_location) && gc.is_occupiable(new_location) &&
+        next <= current) {
       return dir;
     }
   }
+
   return Center;
 }

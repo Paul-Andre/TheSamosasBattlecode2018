@@ -10,6 +10,148 @@
 using namespace std;
 using namespace bc;
 
+Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
+                 PairwiseDistances &pd) {
+  uint16_t id = unit.get_id();
+  MapLocation ml = unit.get_map_location();
+  Direction dir;
+
+  dir = silly_pathfinding(gc, ml, goal, pd);
+  if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
+    gc.move_robot(id, dir);
+    ml = ml.add(dir);
+    unit = gc.get_unit(id);
+  }
+
+  dir = silly_pathfinding(gc, ml, goal, pd);
+  if (gc.can_replicate(id, dir)) {
+    gc.replicate(id, dir);
+    auto replicated_location = unit.get_map_location().add(dir);
+    auto replicated_unit = gc.sense_unit_at_location(replicated_location);
+    return replicated_unit;
+  } else {
+    auto seed = rand();
+    for (int i = 0; i < 8; i++) {
+      auto dir = (Direction)((i + seed) % 8);
+      if (gc.can_replicate(id, dir)) {
+        gc.replicate(id, dir);
+        auto replicated_location = unit.get_map_location().add(dir);
+        auto replicated_unit = gc.sense_unit_at_location(replicated_location);
+        return replicated_unit;
+      }
+    }
+  }
+
+  return unit;
+}
+
+Unit move_worker_randomly(GameController &gc, Unit &unit) {
+  uint16_t id = unit.get_id();
+  MapLocation ml = unit.get_map_location();
+
+  auto seed = rand();
+  for (int i = 0; i < 8; i++) {
+    auto dir = (Direction)((i + seed) % 8);
+    if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
+      gc.move_robot(id, dir);
+      ml = ml.add(dir);
+      unit = gc.get_unit(id);
+      break;
+    }
+  }
+
+  seed = rand();
+  for (int i = 0; i < 8; i++) {
+    auto dir = (Direction)((i + seed) % 8);
+    if (gc.can_replicate(id, dir)) {
+      gc.replicate(id, dir);
+      auto replicated_location = unit.get_map_location().add(dir);
+      auto replicated_unit = gc.sense_unit_at_location(replicated_location);
+      return replicated_unit;
+    }
+  }
+
+  return unit;
+}
+
+bool closest_pair_comp(
+    const pair<unsigned short, pair<Unit, MapLocation>> &first,
+    const pair<unsigned short, pair<Unit, MapLocation>> &second) {
+  return first.first < second.first;
+}
+
+bool is_surrounded(GameController &gc, MapLocation &target_location) {
+  int dx[] = {0, 1, 1, 1, 0, -1, -1, -1};
+  int dy[] = {1, 1, 0, -1, -1, -1, 0, 1};
+
+  auto x = target_location.get_x();
+  auto y = target_location.get_y();
+
+  const auto map = gc.get_starting_planet(gc.get_planet());
+
+  auto width = map.get_width();
+  auto height = map.get_height();
+
+  for (int i = 0; i < 8; i++) {
+    int some_x = x + dx[i];
+    int some_y = y + dy[i];
+
+    if (some_x < 0 || some_x >= width || some_y < 0 || some_y >= height) {
+      continue;
+    }
+
+    MapLocation ml(gc.get_planet(), some_x, some_y);
+    if (!map.is_passable_terrain_at(ml)) {
+      continue;
+    }
+
+    if (!gc.can_sense_location(ml)) {
+      return false;
+    }
+
+    if (!gc.has_unit_at_location(ml)) {
+      return false;
+    }
+
+    // auto unit = gc.sense_unit_at_location(ml);
+    // if (unit.get_team() != gc.get_team()) {
+    // return false;
+    // }
+  }
+
+  return true;
+}
+
+vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
+    GameController &gc, vector<Unit> my_units,
+    vector<pair<MapLocation, bool>> target_locations,
+    PairwiseDistances &distances) {
+  vector<pair<unsigned short, pair<Unit, MapLocation>>> all_pairs;
+  for (int i = 0; i < my_units.size(); i++) {
+    unsigned short min_distance = std::numeric_limits<unsigned short>::max();
+    auto &my_unit = my_units[i];
+    pair<Unit, MapLocation> min_pair =
+        make_pair(my_unit, MapLocation(gc.get_planet(), 0, 0));
+    for (int j = 0; j < target_locations.size(); j++) {
+      auto &target_location = target_locations[j].first;
+      auto surrounded = target_locations[j].second;
+      auto ml = my_unit.get_map_location();
+      auto distance = distances.get_distance(ml, target_location);
+      if (surrounded && distance > 1) {
+        continue;
+      }
+      if (distance <= min_distance) {
+        min_pair = make_pair(my_unit, target_location);
+        min_distance = distance;
+      }
+    }
+    all_pairs.push_back(make_pair(min_distance, min_pair));
+  }
+  sort(all_pairs.begin(), all_pairs.end(), closest_pair_comp);
+
+  return all_pairs;
+}
+
 int main() {
   printf("Player C++ bot starting\n");
 
@@ -24,9 +166,8 @@ int main() {
 
   printf("Connected!\n");
 
-  PlanetMap initial_planet = gc.get_starting_planet(gc.get_planet());
-
-  Team my_team = gc.get_team();
+  const PlanetMap initial_planet = gc.get_starting_planet(gc.get_planet());
+  const Team my_team = gc.get_team();
 
   MapInfo map_info(initial_planet);
 
@@ -41,11 +182,11 @@ int main() {
   vector<Unit> initial_units = initial_planet.get_initial_units();
 
   // TODO: enemies might be separated by barriers
-  MapLocation enemy_initial_location;
+  unordered_map<unsigned, Unit> enemy_initial_units;
   for (int i = 0; i < (int)initial_units.size(); i++) {
     Unit &unit = initial_units[i];
     if (unit.get_team() != my_team) {
-      enemy_initial_location = unit.get_map_location();
+      enemy_initial_units[unit.get_id()] = unit;
     }
   }
 
@@ -72,6 +213,7 @@ int main() {
     vector<Unit> all_units = gc.get_units();
     vector<vector<Unit>> my_units(8);
     vector<vector<Unit>> enemy_units(8);
+    vector<pair<MapLocation, bool>> all_enemy_unit_locations;
 
     for (int i = 0; i < (int)all_units.size(); i++) {
       // TODO: move them out instead of this copying(?)
@@ -79,116 +221,48 @@ int main() {
       if (unit.get_team() == my_team) {
         my_units[unit.get_unit_type()].push_back(unit);
       } else {
+        auto id = unit.get_id();
         enemy_units[unit.get_unit_type()].push_back(unit);
-      }
-    }
-
-    for (size_t i = 0; i < my_units[Factory].size(); i++) {
-      Unit &factory = my_units[Factory][i];
-      uint16_t id = factory.get_id();
-      if (gc.can_produce_robot(id, Ranger)) {
-        gc.produce_robot(id, Ranger);
-      }
-
-      vector<unsigned int> garrison = factory.get_structure_garrison();
-      for (int j = 0; j < (int)garrison.size(); j++) {
-        MapLocation ml = factory.get_map_location();
-        Direction dir =
-            silly_pathfinding(gc, ml, enemy_initial_location, distances);
-        if (gc.can_unload(id, dir)) {
-          gc.unload(id, dir);
+        if (enemy_initial_units.count(id) > 0) {
+          enemy_initial_units.erase(id);
+        }
+        if (unit.get_location().is_on_map()) {
+          auto ml = unit.get_map_location();
+          auto surrounded = is_surrounded(gc, ml);
+          all_enemy_unit_locations.push_back(make_pair(ml, surrounded));
         }
       }
     }
 
-    for (size_t i = 0; i < my_units[Ranger].size(); i++) {
-      Unit &unit = my_units[Ranger][i];
-      uint16_t id = unit.get_id();
-
-      Location location = unit.get_location();
-      if (location.is_on_map()) {
-        MapLocation ml = location.get_map_location();
-        Direction dir =
-            silly_pathfinding(gc, ml, enemy_initial_location, distances);
-        if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-          gc.move_robot(id, dir);
-        }
-      }
+    for (const auto &elem : enemy_initial_units) {
+      auto ml = elem.second.get_map_location();
+      auto surrounded = is_surrounded(gc, ml);
+      all_enemy_unit_locations.push_back(make_pair(ml, surrounded));
     }
 
-    for (size_t i = 0; i < my_units[Worker].size(); i++) {
-      Unit &unit = my_units[Worker][i];
+    auto unit_conquering_pairs = get_closest_units(
+        gc, my_units[Worker], all_enemy_unit_locations, distances);
 
-      uint16_t id = unit.get_id();
+    for (auto &unit_conquering_pair : unit_conquering_pairs) {
+      auto distance = unit_conquering_pair.first;
 
-      // Place a blueprint
-      bool placed_factory = false;
-      for (int dir_int = 0; dir_int < 8; dir_int++) {
-        Direction dir = Direction(dir_int);
-        if (gc.can_blueprint(id, Factory, dir)) {
-          gc.blueprint(id, Factory, dir);
-          placed_factory = true;
+      Unit &replication_unit = unit_conquering_pair.second.first;
+      uint16_t replication_id = replication_unit.get_id();
+      MapLocation goal = unit_conquering_pair.second.second;
+
+      while (true) {
+        Unit maybe_replicated;
+        if (distance == std::numeric_limits<unsigned short>::max()) {
+          // goal invalid: ignore and explore.
+          maybe_replicated = move_worker_randomly(gc, replication_unit);
+        } else {
+          maybe_replicated = move_worker(gc, replication_unit, goal, distances);
+        }
+        if (maybe_replicated.get_id() != replication_id) {
+          replication_unit = maybe_replicated;
+          replication_id = maybe_replicated.get_id();
+        } else {
           break;
-        }
-      }
-      if (placed_factory) continue;
-
-      // TODO: consider the newly places blueprint when considering what
-      // other
-      // bots should do
-
-      // TODO: having the factory "call" the nearest workers might be a
-      // better
-      // idea than having the workers decide
-
-      bool moving_towards_factory = false;
-      MapLocation goal;
-      for (size_t factory_i = 0; factory_i < my_units[Factory].size();
-           factory_i++) {
-        Unit &factory = my_units[Factory][factory_i];
-        if (!factory.structure_is_built()) {
-          goal = factory.get_map_location();
-          moving_towards_factory = true;
-          break;
-        }
-      }
-
-      if (moving_towards_factory) {
-        MapLocation ml = unit.get_map_location();
-        Direction dir;
-
-        dir = silly_pathfinding(gc, ml, goal, distances);
-        if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-          gc.move_robot(id, dir);
-          ml = ml.add(dir);
-        }
-
-        dir = silly_pathfinding(gc, ml, goal, distances);
-        if (gc.can_replicate(id, dir)) {
-          gc.replicate(id, dir);
-        }
-      } else {
-        Direction dir = Direction(rand() % 8);
-        if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-          gc.move_robot(id, dir);
-        }
-
-        /*
-        dir = Direction(rand() % 8);
-        if (gc.can_replicate(id, dir)) {
-          gc.replicate(id, dir);
-        }
-        */
-      }
-
-      for (size_t factory_i = 0; factory_i < my_units[Factory].size();
-           factory_i++) {
-        Unit &factory = my_units[Factory][factory_i];
-        if (!factory.structure_is_built()) {
-          if (gc.can_build(id, factory.get_id())) {
-            gc.build(id, factory.get_id());
-            break;
-          }
         }
       }
     }
