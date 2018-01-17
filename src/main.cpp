@@ -45,6 +45,36 @@ void harvest(GameController &gc, Unit &unit) {
   }
 }
 
+void build(GameController &gc, Unit &unit) {
+  auto worker_id = unit.get_id();
+  Direction best_dir = Center;
+  auto ml = unit.get_map_location();
+  for (int i = 0; i < 9; i++) {
+    auto dir = (Direction)i;
+    auto loc = ml.add(dir);
+
+    if (!gc.has_unit_at_location(loc)) continue;
+    
+    auto other = gc.get_unit_at_location(loc);
+
+    if (other.get_team() != gc.get_team()) continue;
+
+    auto type = other.get_unit_type();
+
+    if (type != Factory && type != Rocket) continue;
+
+    if (other.structure_is_built()) continue;
+
+    auto struct_id = other.get_id();
+
+    if (!gc.can_build(worker_id, struct_id)) continue;
+
+    gc.build(worker_id, struct_id);
+
+    break;
+  }
+}
+
 Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
                  PairwiseDistances &pd, bool should_replicate) {
   uint16_t id = unit.get_id();
@@ -80,6 +110,7 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
   }
 
   harvest(gc, unit);
+  build(gc, unit);
 
   return unit;
 }
@@ -113,6 +144,7 @@ Unit move_worker_randomly(GameController &gc, Unit &unit, bool should_replicate)
   }
 
   harvest(gc, unit);
+  build(gc, unit);
 
   return unit;
 }
@@ -298,7 +330,7 @@ int main() {
     vector<Unit> all_units = gc.get_units();
     vector<vector<Unit>> my_units(8);
     vector<vector<Unit>> enemy_units(8);
-    vector<pair<MapLocation, bool>> all_enemy_unit_locations;
+    vector<MapLocation> target_locations;
 
     for (int i = 0; i < (int)all_units.size(); i++) {
       // TODO: move them out instead of this copying(?)
@@ -312,18 +344,29 @@ int main() {
           enemy_initial_units.erase(id);
         }
         if (unit.get_location().is_on_map()) {
-          auto ml = unit.get_map_location();
-          auto surrounded = is_surrounded(gc, ml);
-          all_enemy_unit_locations.push_back(make_pair(ml, surrounded));
+          target_locations.push_back(unit.get_map_location());
         }
       }
     }
 
-    for (const auto &elem : enemy_initial_units) {
-      auto ml = elem.second.get_map_location();
-      auto surrounded = is_surrounded(gc, ml);
-      all_enemy_unit_locations.push_back(make_pair(ml, surrounded));
+    // Put our rockets into the target vector
+    for (int i=0; i<(int)my_units[Rocket]; i++) {
+      target_locations.push_back(my_unit[Rocket][i].get_map_location());
     }
+
+    // Put original locations in target
+    for (const auto &elem : enemy_initial_units) {
+      target_locations.push_back(elem.second.get_map_location());
+    }
+
+    // Get whether they are surrounded
+    vector<pair<MapLocation, bool>> target_locations_and_surrounded;
+    for(int i=0; i<target_locations.size(); i++) {
+      auto ml = target_location[i];
+      auto surrounded = is_surrounded(gc, ml);
+      target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
+    }
+
 
     // Check if we have enough karbonite to do the next thing
 
