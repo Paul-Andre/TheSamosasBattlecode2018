@@ -325,6 +325,28 @@ int main() {
       all_enemy_unit_locations.push_back(make_pair(ml, surrounded));
     }
 
+    // Check if we have enough karbonite to do the next thing
+
+    bool did_something = true;
+    while (!command_queue.empty() && did_something) {
+      auto karb = gc.get_karbonite();
+      did_something = false;
+      if (command_queue.last().type == BuildRocket && karb >= unit_type_get_blueprint(Rocket)) {
+        if (build_rocket()) {
+          command_queue.pop();
+          did_something = true;
+          continue;
+        }
+      }
+      if (command_queue.last().type == BuildFactory && karb >= unit_type_get_blueprint(Factory)) {
+        if (build_factory()) {
+          command_queue.pop();
+          did_something = true;
+          continue;
+        }
+      }
+    }
+
     auto unit_conquering_pairs = get_closest_units(
         gc, my_units[Worker], all_enemy_unit_locations, distances);
 
