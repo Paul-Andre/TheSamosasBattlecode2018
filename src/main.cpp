@@ -178,6 +178,10 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
     for (int i = 0; i < 8; i++) {
       auto x = unit_x + dx[i];
       auto y = unit_y + dy[i];
+      if (x < 0 || x >= map_info.width || y < 0 || y >= map_info.height) {
+        continue;
+      }
+
       auto dir = (Direction)i;
       if (map_info.passable_terrain[x][y]) {
         if (gc.can_blueprint(id, unit_type, dir)) {
