@@ -34,7 +34,7 @@ void harvest(GameController &gc, Unit &unit) {
 }
 
 Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
-                 PairwiseDistances &pd) {
+                 PairwiseDistances &pd, bool should_replicate) {
   uint16_t id = unit.get_id();
   MapLocation ml = unit.get_map_location();
   Direction dir;
@@ -46,21 +46,23 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
     unit = gc.get_unit(id);
   }
 
-  dir = silly_pathfinding(gc, ml, goal, pd);
-  if (gc.can_replicate(id, dir)) {
-    gc.replicate(id, dir);
-    auto replicated_location = unit.get_map_location().add(dir);
-    auto replicated_unit = gc.sense_unit_at_location(replicated_location);
-    return replicated_unit;
-  } else {
-    auto seed = rand();
-    for (int i = 0; i < 8; i++) {
-      auto dir = (Direction)((i + seed) % 8);
-      if (gc.can_replicate(id, dir)) {
-        gc.replicate(id, dir);
-        auto replicated_location = unit.get_map_location().add(dir);
-        auto replicated_unit = gc.sense_unit_at_location(replicated_location);
-        return replicated_unit;
+  if (should_replicate) {
+    dir = silly_pathfinding(gc, ml, goal, pd);
+    if (gc.can_replicate(id, dir)) {
+      gc.replicate(id, dir);
+      auto replicated_location = unit.get_map_location().add(dir);
+      auto replicated_unit = gc.sense_unit_at_location(replicated_location);
+      return replicated_unit;
+    } else {
+      auto seed = rand();
+      for (int i = 0; i < 8; i++) {
+        auto dir = (Direction)((i + seed) % 8);
+        if (gc.can_replicate(id, dir)) {
+          gc.replicate(id, dir);
+          auto replicated_location = unit.get_map_location().add(dir);
+          auto replicated_unit = gc.sense_unit_at_location(replicated_location);
+          return replicated_unit;
+        }
       }
     }
   }
@@ -70,7 +72,7 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
   return unit;
 }
 
-Unit move_worker_randomly(GameController &gc, Unit &unit) {
+Unit move_worker_randomly(GameController &gc, Unit &unit, bool should_replicate) {
   uint16_t id = unit.get_id();
   MapLocation ml = unit.get_map_location();
 
@@ -85,14 +87,16 @@ Unit move_worker_randomly(GameController &gc, Unit &unit) {
     }
   }
 
-  seed = rand();
-  for (int i = 0; i < 8; i++) {
-    auto dir = (Direction)((i + seed) % 8);
-    if (gc.can_replicate(id, dir)) {
-      gc.replicate(id, dir);
-      auto replicated_location = unit.get_map_location().add(dir);
-      auto replicated_unit = gc.sense_unit_at_location(replicated_location);
-      return replicated_unit;
+  if (should_replicate) {
+    seed = rand();
+    for (int i = 0; i < 8; i++) {
+      auto dir = (Direction)((i + seed) % 8);
+      if (gc.can_replicate(id, dir)) {
+        gc.replicate(id, dir);
+        auto replicated_location = unit.get_map_location().add(dir);
+        auto replicated_unit = gc.sense_unit_at_location(replicated_location);
+        return replicated_unit;
+      }
     }
   }
 
@@ -310,26 +314,50 @@ int main() {
     auto unit_conquering_pairs = get_closest_units(
         gc, my_units[Worker], all_enemy_unit_locations, distances);
 
-    for (auto &unit_conquering_pair : unit_conquering_pairs) {
-      auto distance = unit_conquering_pair.first;
+    if (unit_conquering_pairs.size() != 0) {
 
-      Unit &replication_unit = unit_conquering_pair.second.first;
-      uint16_t replication_id = replication_unit.get_id();
-      MapLocation goal = unit_conquering_pair.second.second;
+      auto best_distance = unit_conquering_pairs[0].first;
 
-      while (true) {
-        Unit maybe_replicated;
-        if (distance == std::numeric_limits<unsigned short>::max()) {
-          // goal invalid: ignore and explore.
-          maybe_replicated = move_worker_randomly(gc, replication_unit);
-        } else {
-          maybe_replicated = move_worker(gc, replication_unit, goal, distances);
-        }
-        if (maybe_replicated.get_id() != replication_id) {
-          replication_unit = maybe_replicated;
-          replication_id = maybe_replicated.get_id();
-        } else {
-          break;
+      int replicated_this_turn = 0;
+
+      for (auto &unit_conquering_pair : unit_conquering_pairs) {
+        auto distance = unit_conquering_pair.first;
+
+        Unit &replication_unit = unit_conquering_pair.second.first;
+        uint16_t replication_id = replication_unit.get_id();
+        MapLocation goal = unit_conquering_pair.second.second;
+
+        while (true) {
+
+          bool should_replicate;
+          if (replicated_this_turn == 0) {
+            should_replicate = true;
+          }
+          else {
+            // Check if we have enough ressources for the closest worker to get to its destination
+            auto karb = gc.get_karbonite();
+            if (5*(best_distance/2)  <= karb) {
+              should_replicate = true;
+            }
+            else {
+              should_replicate = false;
+            }
+          }
+
+          Unit maybe_replicated;
+          if (distance == std::numeric_limits<unsigned short>::max()) {
+            // goal invalid: ignore and explore.
+            maybe_replicated = move_worker_randomly(gc, replication_unit, should_replicate);
+          } else {
+            maybe_replicated = move_worker(gc, replication_unit, goal, distances, should_replicate);
+          }
+          if (maybe_replicated.get_id() != replication_id) {
+            replication_unit = maybe_replicated;
+            replication_id = maybe_replicated.get_id();
+            replicated_this_turn ++;
+          } else {
+            break;
+          }
         }
       }
     }
