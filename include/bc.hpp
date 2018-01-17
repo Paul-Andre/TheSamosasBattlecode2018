@@ -70,6 +70,7 @@ static void print_trace() {
 
 #define log_error(condition, message)                            \
   if (!(condition)) {                                            \
+    assert(false);                                               \
     printf("[info] " __FILE__ ": " S__LINE__ ": " message "\n"); \
     print_trace();                                               \
     exit(1);                                                     \
@@ -1324,6 +1325,10 @@ class GameController {
                      const MapLocation& map_location) const {
     bc_GameController_launch_rocket(m_gc, rocket_id, map_location.get_bc());
     CHECK_ERRORS();
+  }
+
+  unsigned get_time_left_ms() const {
+    return bc_GameController_get_time_left_ms(m_gc);
   }
 
   bool is_over() const { return bc_GameController_is_over(m_gc); }

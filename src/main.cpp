@@ -10,6 +10,29 @@
 using namespace std;
 using namespace bc;
 
+void harvest(GameController &gc, Unit &unit) {
+  auto id = unit.get_id();
+  Direction best_dir = Center;
+  int max_karbonite = 0;
+  for (int i = 0; i < 9; i++) {
+    auto dir = (Direction)i;
+    if (gc.can_harvest(id, dir)) {
+      auto ml = unit.get_map_location().add(dir);
+      if (gc.can_sense_location(ml)) {
+        auto karbonite = gc.get_karbonite_at(ml);
+        if (karbonite > max_karbonite) {
+          max_karbonite = karbonite;
+          best_dir = dir;
+        }
+      }
+    }
+  }
+
+  if (gc.can_harvest(id, best_dir)) {
+    gc.harvest(id, best_dir);
+  }
+}
+
 Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
                  PairwiseDistances &pd) {
   uint16_t id = unit.get_id();
@@ -42,6 +65,8 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
     }
   }
 
+  harvest(gc, unit);
+
   return unit;
 }
 
@@ -70,6 +95,8 @@ Unit move_worker_randomly(GameController &gc, Unit &unit) {
       return replicated_unit;
     }
   }
+
+  harvest(gc, unit);
 
   return unit;
 }
@@ -112,11 +139,6 @@ bool is_surrounded(GameController &gc, MapLocation &target_location) {
     if (!gc.has_unit_at_location(ml)) {
       return false;
     }
-
-    // auto unit = gc.sense_unit_at_location(ml);
-    // if (unit.get_team() != gc.get_team()) {
-    // return false;
-    // }
   }
 
   return true;
@@ -192,10 +214,12 @@ int main() {
 
   // First thing get some research going
   if (gc.get_planet() == Earth) {
-    gc.queue_research(UnitType::Ranger);  // Faster ranger
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker
+    gc.queue_research(UnitType::Rocket);  // To mars
+    gc.queue_research(UnitType::Worker);  // One more karbonite per worker
+    gc.queue_research(UnitType::Worker);  // One more karbonite per worker
+    gc.queue_research(UnitType::Ranger);  // Faster ranger
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision
-    gc.queue_research(UnitType::Rocket);  // To the moon
     gc.queue_research(UnitType::Ranger);  // Snipe
   }
 
@@ -204,6 +228,7 @@ int main() {
     uint32_t round = gc.get_round();
     int start_s = clock();
     printf("Round: %d. \n", round);
+    printf("Karbonite: %d. \n", gc.get_karbonite());
     map_info.update_karbonite(gc);
 
     // Note that all operations perform copies out of their data structures,
@@ -267,9 +292,14 @@ int main() {
       }
     }
 
+    cout << "My unit count: " << my_units[Worker].size() << endl;
+    cout << "Enemy unit count: " << all_enemy_unit_locations.size() << endl;
+
     int stop_s = clock();
     cout << "Round took " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
          << " milliseconds" << endl;
+    cout << "Time left " << gc.get_time_left_ms() << endl;
+
     fflush(stdout);
 
     gc.next_turn();
