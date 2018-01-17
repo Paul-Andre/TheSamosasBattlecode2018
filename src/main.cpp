@@ -54,7 +54,7 @@ void build(GameController &gc, Unit &unit) {
 
     if (!gc.has_unit_at_location(loc)) continue;
     
-    auto other = gc.get_unit_at_location(loc);
+    auto other = gc.sense_unit_at_location(loc);
 
     if (other.get_team() != gc.get_team()) continue;
 
@@ -399,8 +399,8 @@ int main() {
     }
 
     // Put our rockets into the target vector
-    for (int i=0; i<(int)my_units[Rocket]; i++) {
-      target_locations.push_back(my_unit[Rocket][i].get_map_location());
+    for (int i=0; i<(int)my_units[Rocket].size(); i++) {
+      target_locations.push_back(my_units[Rocket][i].get_map_location());
     }
 
     // Put original locations in target
@@ -411,7 +411,7 @@ int main() {
     // Get whether they are surrounded
     vector<pair<MapLocation, bool>> target_locations_and_surrounded;
     for(int i=0; i<target_locations.size(); i++) {
-      auto ml = target_location[i];
+      auto ml = target_locations[i];
       auto surrounded = is_surrounded(gc, ml);
       target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
     }
@@ -442,7 +442,7 @@ int main() {
     }
 
     auto unit_conquering_pairs = get_closest_units(
-        gc, my_units[Worker], all_enemy_unit_locations, distances);
+        gc, my_units[Worker], target_locations_and_surrounded, distances);
 
     if (unit_conquering_pairs.size() != 0) {
       auto best_distance = unit_conquering_pairs[0].first;
@@ -496,7 +496,7 @@ int main() {
     }
 
     cout << "My unit count: " << my_units[Worker].size() << endl;
-    cout << "Enemy unit count: " << all_enemy_unit_locations.size() << endl;
+    cout << "Enemy unit count: " << target_locations_and_surrounded.size() << endl;
 
     int stop_s = clock();
     cout << "Round took " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
