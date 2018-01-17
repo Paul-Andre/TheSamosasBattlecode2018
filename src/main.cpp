@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <ctime>
 #include <iostream>
+#include <queue>
 #include "MapInfo.hpp"
 #include "PairwiseDistances.hpp"
 #include "bc.hpp"
@@ -9,6 +10,17 @@
 
 using namespace std;
 using namespace bc;
+
+enum BuildCommandType {
+  BuildRocket,
+  BuildFactory,
+  ProduceUnit,
+};
+
+struct BuildCommand {
+  BuildCommandType type;
+};
+
 
 void harvest(GameController &gc, Unit &unit) {
   auto id = unit.get_id();
@@ -269,6 +281,8 @@ int main() {
     gc.queue_research(UnitType::Ranger);  // Snipe
   }
 
+  queue<BuildCommand> command_queue;
+
   // loop through the whole game.
   while (true) {
     uint32_t round = gc.get_round();
@@ -315,7 +329,6 @@ int main() {
         gc, my_units[Worker], all_enemy_unit_locations, distances);
 
     if (unit_conquering_pairs.size() != 0) {
-
       auto best_distance = unit_conquering_pairs[0].first;
 
       int replicated_this_turn = 0;
@@ -330,18 +343,23 @@ int main() {
         while (true) {
 
           bool should_replicate;
-          if (replicated_this_turn == 0) {
-            should_replicate = true;
-          }
-          else {
-            // Check if we have enough ressources for the closest worker to get to its destination
-            auto karb = gc.get_karbonite();
-            if (5*(best_distance/2)  <= karb) {
+          if (command_queue.empty()) {
+            if (replicated_this_turn == 0) {
               should_replicate = true;
             }
             else {
-              should_replicate = false;
+              // Check if we have enough ressources for the closest worker to get to its destination
+              auto karb = gc.get_karbonite();
+              if (5*(best_distance/2)  <= karb) {
+                should_replicate = true;
+              }
+              else {
+                should_replicate = false;
+              }
             }
+          }
+          else {
+            should_replicate = false;
           }
 
           Unit maybe_replicated;
