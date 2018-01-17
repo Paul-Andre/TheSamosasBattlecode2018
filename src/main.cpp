@@ -21,7 +21,6 @@ struct BuildCommand {
   BuildCommandType type;
 };
 
-
 void harvest(GameController &gc, Unit &unit) {
   auto id = unit.get_id();
   Direction best_dir = Center;
@@ -115,7 +114,8 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
   return unit;
 }
 
-Unit move_worker_randomly(GameController &gc, Unit &unit, bool should_replicate) {
+Unit move_worker_randomly(GameController &gc, Unit &unit,
+                          bool should_replicate) {
   uint16_t id = unit.get_id();
   MapLocation ml = unit.get_map_location();
 
@@ -147,6 +147,48 @@ Unit move_worker_randomly(GameController &gc, Unit &unit, bool should_replicate)
   build(gc, unit);
 
   return unit;
+}
+
+MapLocation random_location(MapInfo &map_info) {
+  while (true) {
+    int x = rand() % map_info.width;
+    int y = rand() % map_info.height;
+    if (map_info.passable_terrain[x][y]) {
+      return MapLocation(map_info.planet, x, y);
+    }
+  }
+}
+
+bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
+               UnitType unit_type) {
+  int dx[] = {0, 1, 1, 1, 0, -1, -1, -1};
+  int dy[] = {1, 1, 0, -1, -1, -1, 0, 1};
+
+  for (auto &unit : my_units) {
+    auto id = unit.get_id();
+    auto loc = unit.get_location();
+    if (!loc.is_on_map()) {
+      continue;
+    }
+
+    auto ml = loc.get_map_location();
+    auto unit_x = ml.get_x();
+    auto unit_y = ml.get_y();
+
+    for (int i = 0; i < 8; i++) {
+      auto x = unit_x + dx[i];
+      auto y = unit_y + dy[i];
+      auto dir = (Direction)i;
+      if (map_info.passable_terrain[x][y]) {
+        if (gc.can_blueprint(id, unit_type, dir)) {
+          gc.blueprint(id, unit_type, dir);
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 bool closest_pair_comp(
@@ -282,6 +324,7 @@ int main() {
   const Team my_team = gc.get_team();
 
   MapInfo map_info(initial_planet);
+  MapInfo mars_map_info(gc.get_starting_planet(Mars));
 
   int start_s = clock();
   PairwiseDistances distances(map_info.passable_terrain);
@@ -306,8 +349,9 @@ int main() {
   if (gc.get_planet() == Earth) {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker
     gc.queue_research(UnitType::Rocket);  // To mars
-    gc.queue_research(UnitType::Worker);  // One more karbonite per worker
-    gc.queue_research(UnitType::Worker);  // One more karbonite per worker
+    gc.queue_research(UnitType::Worker);  // Increase build speed
+    gc.queue_research(UnitType::Worker);  // Increase build speed
+    gc.queue_research(UnitType::Worker);  // Increase build speed
     gc.queue_research(UnitType::Ranger);  // Faster ranger
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision
     gc.queue_research(UnitType::Ranger);  // Snipe
@@ -325,6 +369,11 @@ int main() {
 
     // Note that all operations perform copies out of their data structures,
     // returning new objects.
+
+    // Spam rocket building.
+    if (round > 125 && round % 25 == 0) {
+      command_queue.push({BuildRocket});
+    }
 
     // Get all units and split into them depending on team and type
     vector<Unit> all_units = gc.get_units();
@@ -374,15 +423,17 @@ int main() {
     while (!command_queue.empty() && did_something) {
       auto karb = gc.get_karbonite();
       did_something = false;
-      if (command_queue.last().type == BuildRocket && karb >= unit_type_get_blueprint(Rocket)) {
-        if (build_rocket()) {
+      if (command_queue.back().type == BuildRocket &&
+          karb >= unit_type_get_blueprint_cost(Rocket)) {
+        if (blueprint(map_info, gc, my_units[Worker], Rocket)) {
           command_queue.pop();
           did_something = true;
           continue;
         }
       }
-      if (command_queue.last().type == BuildFactory && karb >= unit_type_get_blueprint(Factory)) {
-        if (build_factory()) {
+      if (command_queue.back().type == BuildFactory &&
+          karb >= unit_type_get_blueprint_cost(Factory)) {
+        if (blueprint(map_info, gc, my_units[Worker], Factory)) {
           command_queue.pop();
           did_something = true;
           continue;
@@ -406,38 +457,37 @@ int main() {
         MapLocation goal = unit_conquering_pair.second.second;
 
         while (true) {
-
           bool should_replicate;
           if (command_queue.empty()) {
             if (replicated_this_turn == 0) {
               should_replicate = true;
-            }
-            else {
-              // Check if we have enough ressources for the closest worker to get to its destination
+            } else {
+              // Check if we have enough ressources for the closest worker to
+              // get to its destination
               auto karb = gc.get_karbonite();
-              if (5*(best_distance/2)  <= karb) {
+              if (5 * (best_distance / 2) <= karb) {
                 should_replicate = true;
-              }
-              else {
+              } else {
                 should_replicate = false;
               }
             }
-          }
-          else {
+          } else {
             should_replicate = false;
           }
 
           Unit maybe_replicated;
           if (distance == std::numeric_limits<unsigned short>::max()) {
             // goal invalid: ignore and explore.
-            maybe_replicated = move_worker_randomly(gc, replication_unit, should_replicate);
+            maybe_replicated =
+                move_worker_randomly(gc, replication_unit, should_replicate);
           } else {
-            maybe_replicated = move_worker(gc, replication_unit, goal, distances, should_replicate);
+            maybe_replicated = move_worker(gc, replication_unit, goal,
+                                           distances, should_replicate);
           }
           if (maybe_replicated.get_id() != replication_id) {
             replication_unit = maybe_replicated;
             replication_id = maybe_replicated.get_id();
-            replicated_this_turn ++;
+            replicated_this_turn++;
           } else {
             break;
           }
@@ -452,6 +502,7 @@ int main() {
     cout << "Round took " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
          << " milliseconds" << endl;
     cout << "Time left " << gc.get_time_left_ms() << endl;
+    cout << "==========" << endl;
 
     fflush(stdout);
 

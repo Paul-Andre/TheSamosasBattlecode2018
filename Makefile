@@ -5,7 +5,6 @@ OBJ_DIR  := $(BUILD)/objects
 
 CXX      := g++
 CXXFLAGS := -std=c++14 -O2 -g
-CXXFLAGS += -DBACKTRACE
 CXXFLAGS += -pedantic-errors -Wall
 CXXFLAGS += -Wno-keyword-macro -Wno-pessimizing-move -Wno-unused-function
 
