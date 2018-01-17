@@ -70,7 +70,6 @@ static void print_trace() {
 
 #define log_error(condition, message)                            \
   if (!(condition)) {                                            \
-    assert(false);                                               \
     printf("[info] " __FILE__ ": " S__LINE__ ": " message "\n"); \
     print_trace();                                               \
     exit(1);                                                     \
