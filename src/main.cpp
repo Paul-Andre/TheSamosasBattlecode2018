@@ -149,22 +149,64 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
     vector<pair<MapLocation, bool>> target_locations,
     PairwiseDistances &distances) {
   vector<pair<unsigned short, pair<Unit, MapLocation>>> all_pairs;
+  const int MAX_DISTANCES = 10000;
+  bool fast_enough = my_units.size() * target_locations.size() < MAX_DISTANCES;
   for (int i = 0; i < my_units.size(); i++) {
     unsigned short min_distance = std::numeric_limits<unsigned short>::max();
     auto &my_unit = my_units[i];
     pair<Unit, MapLocation> min_pair =
         make_pair(my_unit, MapLocation(gc.get_planet(), 0, 0));
-    for (int j = 0; j < target_locations.size(); j++) {
-      auto &target_location = target_locations[j].first;
-      auto surrounded = target_locations[j].second;
-      auto ml = my_unit.get_map_location();
-      auto distance = distances.get_distance(ml, target_location);
-      if (surrounded && distance > 1) {
-        continue;
+    if (fast_enough) {
+      for (int j = 0; j < target_locations.size(); j++) {
+        auto &target_location = target_locations[j].first;
+        auto surrounded = target_locations[j].second;
+        auto ml = my_unit.get_map_location();
+        auto distance = distances.get_distance(ml, target_location);
+        if (surrounded && distance > 1) {
+          continue;
+        }
+        if (distance <= min_distance) {
+          min_pair = make_pair(my_unit, target_location);
+          min_distance = distance;
+        }
       }
-      if (distance <= min_distance) {
-        min_pair = make_pair(my_unit, target_location);
-        min_distance = distance;
+    } else {
+      int dx[] = {0, 1, 1, 1, 0, -1, -1, -1};
+      int dy[] = {1, 1, 0, -1, -1, -1, 0, 1};
+      for (int k = 0; k < 8; k++) {
+        int some_x = my_unit.get_map_location().get_x() + dx[k];
+        int some_y = my_unit.get_map_location().get_y() + dy[k];
+        const auto map = gc.get_starting_planet(gc.get_planet());
+
+        if (some_x < 0 || some_x >= map.get_width() || some_y < 0 ||
+            some_y >= map.get_height()) {
+          continue;
+        }
+
+        MapLocation ml(gc.get_planet(), some_x, some_y);
+        if (gc.has_unit_at_location(ml)) {
+          auto unit = gc.sense_unit_at_location(ml);
+          if (unit.get_team() != gc.get_team()) {
+            min_pair = make_pair(my_unit, ml);
+            min_distance = 1;
+          }
+        }
+      }
+
+      const int N_SAMPLES = MAX_DISTANCES / my_units.size();
+      for (int k = 0; k < N_SAMPLES; k++) {
+        int j = rand() % target_locations.size();
+        auto &target_location = target_locations[j].first;
+        auto surrounded = target_locations[j].second;
+        auto ml = my_unit.get_map_location();
+        auto distance = distances.get_distance(ml, target_location);
+        if (surrounded && distance > 1) {
+          continue;
+        }
+        if (distance <= min_distance) {
+          min_pair = make_pair(my_unit, target_location);
+          min_distance = distance;
+        }
       }
     }
     all_pairs.push_back(make_pair(min_distance, min_pair));
