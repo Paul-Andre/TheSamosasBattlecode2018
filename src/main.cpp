@@ -375,7 +375,7 @@ int main() {
     // returning new objects.
 
     // Spam rocket building.
-    if (round > 125 && round % 25 == 0) {
+    if (round > 125 && round % 25 == 0 && gc.get_planet() == Earth) {
       command_queue.push({BuildRocket});
     }
 
@@ -402,9 +402,11 @@ int main() {
       }
     }
 
-    // Put our rockets into the target vector
-    for (int i=0; i<(int)my_units[Rocket].size(); i++) {
-      target_locations.push_back(my_units[Rocket][i].get_map_location());
+    if (gc.get_planet() == Earth) {
+      // Put our rockets into the target vector
+      for (int i=0; i<(int)my_units[Rocket].size(); i++) {
+        target_locations.push_back(my_units[Rocket][i].get_map_location());
+      }
     }
 
     // Put original locations in target
@@ -441,6 +443,26 @@ int main() {
           command_queue.pop();
           did_something = true;
           continue;
+        }
+      }
+    }
+
+    if (map_info.planet == Mars) {
+
+      for (size_t i = 0; i < my_units[Rocket].size(); i++) {
+        Unit &factory = my_units[Rocket][i];
+        uint16_t id = factory.get_id();
+
+        vector<unsigned int> garrison = factory.get_structure_garrison();
+        for (int j = 0; j < (int)garrison.size(); j++) {
+          MapLocation ml = factory.get_map_location();
+
+          for (int i=0; i<8; i++) {
+            auto dir = Direction(i);
+            if (gc.can_unload(id, dir)) {
+              gc.unload(id, dir);
+            }
+          }
         }
       }
     }
