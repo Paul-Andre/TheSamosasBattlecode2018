@@ -46,14 +46,13 @@ void harvest(GameController &gc, Unit &unit) {
 
 void build(GameController &gc, Unit &unit) {
   auto worker_id = unit.get_id();
-  Direction best_dir = Center;
   auto ml = unit.get_map_location();
   for (int i = 0; i < 9; i++) {
     auto dir = (Direction)i;
     auto loc = ml.add(dir);
 
     if (!gc.has_unit_at_location(loc)) continue;
-    
+
     auto other = gc.sense_unit_at_location(loc);
 
     if (other.get_team() != gc.get_team()) continue;
@@ -238,6 +237,52 @@ bool is_surrounded(GameController &gc, MapLocation &target_location) {
   return true;
 }
 
+bool is_surrounding(GameController &gc, Unit &unit) {
+  if (!unit.get_location().is_on_map()) {
+    return false;
+  }
+
+  auto ml = unit.get_map_location();
+  for (int i = 0; i < 8; i++) {
+    auto dir = (Direction)i;
+    auto loc = ml.add(dir);
+
+    if (!gc.has_unit_at_location(loc)) continue;
+
+    auto other = gc.sense_unit_at_location(loc);
+
+    if (other.get_team() != gc.get_team()) return true;
+  }
+
+  return false;
+}
+
+void try_board_nearby_rocket(GameController &gc, Unit &unit) {
+  auto worker_id = unit.get_id();
+  if (!unit.get_location().is_on_map()) {
+    return;
+  }
+
+  auto ml = unit.get_map_location();
+  for (int i = 0; i < 8; i++) {
+    auto dir = (Direction)i;
+    auto loc = ml.add(dir);
+
+    if (!gc.has_unit_at_location(loc)) continue;
+
+    auto other = gc.sense_unit_at_location(loc);
+
+    if (other.get_team() != gc.get_team()) continue;
+
+    if (other.get_unit_type() != Rocket) continue;
+
+    // It's a rocket!
+    if (!gc.can_load(other.get_id(), worker_id)) continue;
+
+    gc.load(other.get_id(), worker_id);
+  }
+}
+
 vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
     GameController &gc, vector<Unit> my_units,
     vector<pair<MapLocation, bool>> target_locations,
@@ -248,6 +293,8 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
   for (int i = 0; i < my_units.size(); i++) {
     unsigned short min_distance = std::numeric_limits<unsigned short>::max();
     auto &my_unit = my_units[i];
+    if (!my_unit.get_location().is_on_map()) continue;
+
     pair<Unit, MapLocation> min_pair =
         make_pair(my_unit, MapLocation(gc.get_planet(), 0, 0));
     if (fast_enough) {
@@ -403,7 +450,7 @@ int main() {
     }
 
     // Put our rockets into the target vector
-    for (int i=0; i<(int)my_units[Rocket].size(); i++) {
+    for (int i = 0; i < (int)my_units[Rocket].size(); i++) {
       target_locations.push_back(my_units[Rocket][i].get_map_location());
     }
 
@@ -414,12 +461,11 @@ int main() {
 
     // Get whether they are surrounded
     vector<pair<MapLocation, bool>> target_locations_and_surrounded;
-    for(int i=0; i<target_locations.size(); i++) {
+    for (int i = 0; i < target_locations.size(); i++) {
       auto ml = target_locations[i];
       auto surrounded = is_surrounded(gc, ml);
       target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
     }
-
 
     // Check if we have enough karbonite to do the next thing
 
@@ -443,6 +489,19 @@ int main() {
           continue;
         }
       }
+    }
+
+    for (auto &worker : my_units[Worker]) {
+      if (is_surrounding(gc, worker)) continue;
+      try_board_nearby_rocket(gc, worker);
+    }
+
+    for (auto &rocket : my_units[Rocket]) {
+      if (!rocket.structure_is_built()) continue;
+      if (rocket.get_structure_garrison().size() < 4) continue;
+      auto ml = random_location(mars_map_info);
+      if (!gc.can_launch_rocket(rocket.get_id(), ml)) continue;
+      gc.launch_rocket(rocket.get_id(), ml);
     }
 
     auto unit_conquering_pairs = get_closest_units(
@@ -500,7 +559,8 @@ int main() {
     }
 
     cout << "My unit count: " << my_units[Worker].size() << endl;
-    cout << "Enemy unit count: " << target_locations_and_surrounded.size() << endl;
+    cout << "Enemy unit count: " << target_locations_and_surrounded.size()
+         << endl;
 
     int stop_s = clock();
     cout << "Round took " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
