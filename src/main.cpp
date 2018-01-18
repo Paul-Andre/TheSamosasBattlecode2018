@@ -181,6 +181,24 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
         continue;
       }
 
+      bool build_ok = true;
+      for (int j = -2; j <= 2; j++) {
+        for (int k = -2; k <= 2; k++) {
+          if (j == 0 && k == 0) continue;
+          auto new_x = x + j;
+          auto new_y = y + k;
+
+          auto new_ml = MapLocation(map_info.planet, new_x, new_y);
+          if (gc.can_sense_location(new_ml)) {
+            if (gc.has_unit_at_location(new_ml) &&
+                gc.sense_unit_at_location(new_ml).get_team() != gc.get_team())
+              build_ok = false;
+          }
+        }
+      }
+
+      if (!build_ok) continue;
+
       auto dir = (Direction)i;
       if (map_info.passable_terrain[x][y]) {
         if (gc.can_blueprint(id, unit_type, dir)) {
