@@ -294,6 +294,7 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
     unsigned short min_distance = std::numeric_limits<unsigned short>::max();
     auto &my_unit = my_units[i];
     if (!my_unit.get_location().is_on_map()) continue;
+    auto surrounding = is_surrounding(gc, my_unit);
 
     pair<Unit, MapLocation> min_pair =
         make_pair(my_unit, MapLocation(gc.get_planet(), 0, 0));
@@ -301,6 +302,12 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
       for (int j = 0; j < target_locations.size(); j++) {
         auto &target_location = target_locations[j].first;
         auto surrounded = target_locations[j].second;
+        if (surrounding && gc.can_sense_location(target_location)) {
+          if (!gc.has_unit_at_location(target_location)) continue;
+          auto other_unit = gc.sense_unit_at_location(target_location);
+          if (other_unit.get_team() == gc.get_team()) continue;
+        }
+
         auto ml = my_unit.get_map_location();
         auto distance = distances.get_distance(ml, target_location);
         if (surrounded && distance > 1) {
@@ -339,6 +346,13 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
         int j = rand() % target_locations.size();
         auto &target_location = target_locations[j].first;
         auto surrounded = target_locations[j].second;
+
+        if (surrounding && gc.can_sense_location(target_location)) {
+          if (!gc.has_unit_at_location(target_location)) continue;
+          auto other_unit = gc.sense_unit_at_location(target_location);
+          if (other_unit.get_team() == gc.get_team()) continue;
+        }
+
         auto ml = my_unit.get_map_location();
         auto distance = distances.get_distance(ml, target_location);
         if (surrounded && distance > 1) {
@@ -451,7 +465,7 @@ int main() {
 
     if (gc.get_planet() == Earth) {
       // Put our rockets into the target vector
-      for (int i=0; i<(int)my_units[Rocket].size(); i++) {
+      for (int i = 0; i < (int)my_units[Rocket].size(); i++) {
         target_locations.push_back(my_units[Rocket][i].get_map_location());
       }
     }
@@ -493,40 +507,39 @@ int main() {
       }
     }
 
-  if (map_info.planet == Mars) {
+    if (map_info.planet == Mars) {
+      for (size_t i = 0; i < my_units[Rocket].size(); i++) {
+        Unit &factory = my_units[Rocket][i];
+        uint16_t id = factory.get_id();
 
-    for (size_t i = 0; i < my_units[Rocket].size(); i++) {
-      Unit &factory = my_units[Rocket][i];
-      uint16_t id = factory.get_id();
+        vector<unsigned int> garrison = factory.get_structure_garrison();
+        for (int j = 0; j < (int)garrison.size(); j++) {
+          MapLocation ml = factory.get_map_location();
 
-      vector<unsigned int> garrison = factory.get_structure_garrison();
-      for (int j = 0; j < (int)garrison.size(); j++) {
-        MapLocation ml = factory.get_map_location();
-
-        for (int i=0; i<8; i++) {
-          auto dir = Direction(i);
-          if (gc.can_unload(id, dir)) {
-            gc.unload(id, dir);
+          for (int i = 0; i < 8; i++) {
+            auto dir = Direction(i);
+            if (gc.can_unload(id, dir)) {
+              gc.unload(id, dir);
+            }
           }
         }
       }
     }
-  }
 
-  else {
-    for (auto &worker : my_units[Worker]) {
-      if (is_surrounding(gc, worker)) continue;
-      try_board_nearby_rocket(gc, worker);
-    }
+    else {
+      for (auto &worker : my_units[Worker]) {
+        if (is_surrounding(gc, worker)) continue;
+        try_board_nearby_rocket(gc, worker);
+      }
 
-    for (auto &rocket : my_units[Rocket]) {
-      if (!rocket.structure_is_built()) continue;
-      if (rocket.get_structure_garrison().size() < 4) continue;
-      auto ml = random_location(mars_map_info);
-      if (!gc.can_launch_rocket(rocket.get_id(), ml)) continue;
-      gc.launch_rocket(rocket.get_id(), ml);
+      for (auto &rocket : my_units[Rocket]) {
+        if (!rocket.structure_is_built()) continue;
+        if (rocket.get_structure_garrison().size() < 4) continue;
+        auto ml = random_location(mars_map_info);
+        if (!gc.can_launch_rocket(rocket.get_id(), ml)) continue;
+        gc.launch_rocket(rocket.get_id(), ml);
+      }
     }
-  }
 
     auto unit_conquering_pairs = get_closest_units(
         gc, my_units[Worker], target_locations_and_surrounded, distances);
