@@ -444,7 +444,7 @@ class MapLocation {
 
   // TODO: MapLocation to_string
 
-  // private:
+ private:
   UniquePtr<bc_MapLocation, delete_bc_MapLocation> m_map_location;
 
   Planet m_planet;
@@ -519,7 +519,7 @@ class Location {
 
   // TODO: Location to_string
 
-  // private:
+ private:
   enum { Map, Garrison, Space } m_type;
 
   unsigned m_garrison_id;
@@ -703,7 +703,7 @@ class Unit {
   }
   bool is_robot() const { return !is_structure(); }
 
-  // private:
+ private:
   UniquePtr<bc_Unit, delete_bc_Unit> m_unit;
 
   // XXX: Stored for cache reasons
@@ -810,7 +810,7 @@ class PlanetMap {
 
   // TODO: PlanetMap to_string
 
-  // private:
+ private:
   UniquePtr<bc_PlanetMap, delete_bc_PlanetMap> m_planet_map;
   Planet m_planet;
   unsigned m_height, m_width;
@@ -845,7 +845,7 @@ class AsteroidStrike {
 
   // TODO: AsteroidStrike to_string
 
-  // private:
+ private:
   unsigned m_karbonite;
   MapLocation m_location;
 };
@@ -879,7 +879,7 @@ class AsteroidPattern {
 
   // TODO: AsteroidPattern to_string
 
-  // private:
+ private:
   // IMPORTANT: weak pointer
   bc_AsteroidPattern* m_pattern;
 };
@@ -902,7 +902,7 @@ class OrbitPattern {
     return bc_OrbitPattern_duration(m_orbit_pattern, round);
   }
 
-  // private:
+ private:
   // IMPORTANT: weak pointer
   bc_OrbitPattern* m_orbit_pattern;
   unsigned m_amplitude;
@@ -950,7 +950,7 @@ class ResearchInfo {
     return r;
   }
 
-  // private:
+ private:
   UniquePtr<bc_ResearchInfo, delete_bc_ResearchInfo> m_info;
 };
 
@@ -968,7 +968,7 @@ class RocketLanding {
   unsigned get_rocket_id() const { return m_rocket_id; }
   const MapLocation& get_destination() const { return m_destination; }
 
-  // private:
+ private:
   unsigned m_rocket_id;
   MapLocation m_destination;
 };
@@ -993,7 +993,7 @@ class RocketLandingInfo {
         bc_RocketLandingInfo_landings_on(m_rocket_landing_info.get(), round));
   }
 
-  // private:
+ private:
   UniquePtr<bc_RocketLandingInfo, delete_bc_RocketLandingInfo>
       m_rocket_landing_info;
 };
@@ -1334,7 +1334,9 @@ class GameController {
 
   Team get_winning_team() const { return bc_GameController_winning_team(m_gc); }
 
-  // private:
+  bc_GameController* get_bc() const { return m_gc; }
+
+ private:
   bc_GameController* m_gc;
 
   PlanetMap m_earth_map;

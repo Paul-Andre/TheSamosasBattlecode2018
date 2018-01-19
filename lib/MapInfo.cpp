@@ -27,8 +27,9 @@ void MapInfo::update_karbonite(const GameController &gc) {
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
       bc_MapLocation *mp = location[i][j];
-      if (bc_GameController_can_sense_location(gc.m_gc, mp)) {
-        karbonite[i][j] = bc_GameController_karbonite_at(gc.m_gc, mp);
+      auto m_gc = gc.get_bc();
+      if (bc_GameController_can_sense_location(m_gc, mp)) {
+        karbonite[i][j] = bc_GameController_karbonite_at(m_gc, mp);
       }
     }
   }
