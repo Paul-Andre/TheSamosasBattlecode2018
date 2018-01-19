@@ -1,13 +1,11 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include "PairwiseDistances.hpp"
-#include "bc.hpp"
 
-// TODO: put this in some shared file
-// TODO: make sure that this corresponds to the actual direciton values
-int dx[9] = {0, 1, 1, 1, 0, -1, -1, -1, 0};
-int dy[9] = {1, 1, 0, -1, -1, -1, 0, 1, 0};
+#include "PairwiseDistances.hpp"
+
+#include "bc.hpp"
+#include "constants.hpp"
 
 // TODO: make some kind of GameState object that I can pass easily
 Direction silly_pathfinding(GameController &gc, MapLocation &start,
@@ -20,16 +18,16 @@ Direction silly_pathfinding(GameController &gc, MapLocation &start,
 
   // Used to sort by distance and then by random
   vector<pair<pair<unsigned short, int>, int>> v;
-  for (int k = 0; k < 9; k++) {
-    int xx = unit_x + dx[k];
-    int yy = unit_y + dy[k];
+  for (int k = 0; k < constants::N_DIRECTIONS; k++) {
+    int xx = unit_x + constants::DX[k];
+    int yy = unit_y + constants::DY[k];
     v.push_back(make_pair(make_pair(pd.get_distance(x, y, xx, yy), rand()), k));
   }
 
   auto current = v[8].first.first;
   sort(v.begin(), v.end());
 
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < constants::N_DIRECTIONS; i++) {
     auto next = v[i].first.first;
     Direction dir = Direction(v[i].second);
     MapLocation new_location = start.add(dir);

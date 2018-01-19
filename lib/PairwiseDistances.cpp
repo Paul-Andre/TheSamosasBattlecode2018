@@ -16,20 +16,17 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
   int m = (int)passable_terrain[0].size();
   width = n;
   height = m;
-  assert(n <= MAX_MAP_SIZE);
-  assert(m <= MAX_MAP_SIZE);
+  assert(n <= constants::MAX_MAP_SIZE);
+  assert(m <= constants::MAX_MAP_SIZE);
 
-  bool pass[MAX_MAP_SIZE][MAX_MAP_SIZE];
+  bool pass[constants::MAX_MAP_SIZE][constants::MAX_MAP_SIZE];
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
       pass[i][j] = passable_terrain[i][j];
     }
   }
 
-  bool visited[MAX_MAP_SIZE][MAX_MAP_SIZE];
-
-  int dx[8] = {1, 1, 1, 0, -1, -1, -1, 0};
-  int dy[8] = {1, 0, -1, -1, -1, 0, 1, 1};
+  bool visited[constants::MAX_MAP_SIZE][constants::MAX_MAP_SIZE];
 
   memset(distances, -1, sizeof(*distances));
 
@@ -58,9 +55,9 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
 
           (*distances)[i][j][ii][jj] = dist;
 
-          for (int k = 0; k < 8; k++) {
-            int x = ii + dx[k];
-            int y = jj + dy[k];
+          for (int k = 0; k < constants::N_DIRECTIONS_WITHOUT_CENTER; k++) {
+            int x = ii + constants::DX[k];
+            int y = jj + constants::DY[k];
 
             if (x >= 0 && x < n && y >= 0 && y < m && !visited[x][y] &&
                 pass[x][y]) {

@@ -2,9 +2,12 @@
 #include <ctime>
 #include <iostream>
 #include <queue>
+
 #include "MapInfo.hpp"
 #include "PairwiseDistances.hpp"
+
 #include "bc.hpp"
+#include "constants.hpp"
 #include "silly_pathfinding.hpp"
 
 using namespace std;
@@ -24,7 +27,7 @@ void harvest(GameController &gc, Unit &unit) {
   auto id = unit.get_id();
   Direction best_dir = Center;
   int max_karbonite = 0;
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < constants::N_DIRECTIONS; i++) {
     auto dir = (Direction)i;
     if (gc.can_harvest(id, dir)) {
       auto ml = unit.get_map_location().add(dir);
@@ -94,8 +97,9 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
       return replicated_unit;
     } else {
       auto seed = rand();
-      for (int i = 0; i < 8; i++) {
-        auto dir = (Direction)((i + seed) % 8);
+      for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+        auto dir =
+            (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
         if (gc.can_replicate(id, dir)) {
           gc.replicate(id, dir);
           auto replicated_location = unit.get_map_location().add(dir);
@@ -130,7 +134,7 @@ Unit move_worker_randomly(GameController &gc, Unit &unit,
 
   if (should_replicate) {
     seed = rand();
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
       auto dir = (Direction)((i + seed) % 8);
       if (gc.can_replicate(id, dir)) {
         gc.replicate(id, dir);
@@ -159,9 +163,6 @@ MapLocation random_location(MapInfo &map_info) {
 
 bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
                UnitType unit_type) {
-  int dx[] = {0, 1, 1, 1, 0, -1, -1, -1};
-  int dy[] = {1, 1, 0, -1, -1, -1, 0, 1};
-
   for (auto &unit : my_units) {
     auto id = unit.get_id();
     auto loc = unit.get_location();
@@ -173,9 +174,9 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
     auto unit_x = ml.get_x();
     auto unit_y = ml.get_y();
 
-    for (int i = 0; i < 8; i++) {
-      auto x = unit_x + dx[i];
-      auto y = unit_y + dy[i];
+    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+      auto x = unit_x + constants::DX[i];
+      auto y = unit_y + constants::DY[i];
       if (x < 0 || x >= map_info.width || y < 0 || y >= map_info.height) {
         continue;
       }
@@ -218,9 +219,6 @@ bool closest_pair_comp(
 }
 
 bool is_surrounded(GameController &gc, MapLocation &target_location) {
-  int dx[] = {0, 1, 1, 1, 0, -1, -1, -1};
-  int dy[] = {1, 1, 0, -1, -1, -1, 0, 1};
-
   auto x = target_location.get_x();
   auto y = target_location.get_y();
 
@@ -229,9 +227,9 @@ bool is_surrounded(GameController &gc, MapLocation &target_location) {
   auto width = map.get_width();
   auto height = map.get_height();
 
-  for (int i = 0; i < 8; i++) {
-    int some_x = x + dx[i];
-    int some_y = y + dy[i];
+  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+    int some_x = x + constants::DX[i];
+    int some_y = y + constants::DY[i];
 
     if (some_x < 0 || some_x >= width || some_y < 0 || some_y >= height) {
       continue;
@@ -260,7 +258,7 @@ bool is_surrounding(GameController &gc, Unit &unit) {
   }
 
   auto ml = unit.get_map_location();
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
     auto dir = (Direction)i;
     auto loc = ml.add(dir);
 
@@ -281,7 +279,7 @@ void try_board_nearby_rocket(GameController &gc, Unit &unit) {
   }
 
   auto ml = unit.get_map_location();
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
     auto dir = (Direction)i;
     auto loc = ml.add(dir);
 
@@ -336,11 +334,9 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
         }
       }
     } else {
-      int dx[] = {0, 1, 1, 1, 0, -1, -1, -1};
-      int dy[] = {1, 1, 0, -1, -1, -1, 0, 1};
-      for (int k = 0; k < 8; k++) {
-        int some_x = my_unit.get_map_location().get_x() + dx[k];
-        int some_y = my_unit.get_map_location().get_y() + dy[k];
+      for (int k = 0; k < constants::N_DIRECTIONS_WITHOUT_CENTER; k++) {
+        int some_x = my_unit.get_map_location().get_x() + constants::DX[k];
+        int some_y = my_unit.get_map_location().get_y() + constants::DY[k];
         const auto map = gc.get_starting_planet(gc.get_planet());
 
         if (some_x < 0 || some_x >= map.get_width() || some_y < 0 ||
@@ -533,7 +529,7 @@ int main() {
         for (int j = 0; j < (int)garrison.size(); j++) {
           MapLocation ml = factory.get_map_location();
 
-          for (int i = 0; i < 8; i++) {
+          for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
             auto dir = Direction(i);
             if (gc.can_unload(id, dir)) {
               gc.unload(id, dir);
