@@ -177,7 +177,7 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
       auto x = unit_x + constants::DX[i];
       auto y = unit_y + constants::DY[i];
-      if (x < 0 || x >= map_info.width || y < 0 || y >= map_info.height) {
+      if (!map_info.is_valid_location(x, y)) {
         continue;
       }
 
@@ -443,7 +443,7 @@ int main() {
     int start_s = clock();
     printf("Round: %d. \n", round);
     printf("Karbonite: %d. \n", gc.get_karbonite());
-    map_info.update_karbonite(gc);
+    map_info.update(gc);
 
     // Note that all operations perform copies out of their data structures,
     // returning new objects.
@@ -455,8 +455,8 @@ int main() {
 
     // Get all units and split into them depending on team and type
     vector<Unit> all_units = gc.get_units();
-    vector<vector<Unit>> my_units(8);
-    vector<vector<Unit>> enemy_units(8);
+    vector<vector<Unit>> my_units(constants::N_UNIT_TYPES);
+    vector<vector<Unit>> enemy_units(constants::N_UNIT_TYPES);
     vector<MapLocation> target_locations;
 
     for (int i = 0; i < (int)all_units.size(); i++) {

@@ -13,10 +13,15 @@ struct MapInfo {
 
   // Convention: [x][y].
   vector<vector<unsigned>> karbonite;
+  vector<vector<bool>> sensible;
   vector<vector<bool>> passable_terrain;
   vector<vector<MapLocation *>> location;
 
   MapInfo(const PlanetMap &map);
 
-  void update_karbonite(const GameController &gc);
+  void update(const GameController &gc);
+
+  inline bool is_valid_location(int x, int y) const {
+    return x >= 0 && x < width && y >= 0 && y < height;
+  }
 };

@@ -9,6 +9,7 @@ MapInfo::MapInfo(const PlanetMap &map)
       height((int)map.get_height()),
       planet(map.get_planet()),
       karbonite(width, vector<unsigned>(height)),
+      sensible(width, vector<bool>(height)),
       passable_terrain(width, vector<bool>(height)),
       location(width, vector<MapLocation *>(height)) {
   for (int i = 0; i < width; i++) {
@@ -22,11 +23,13 @@ MapInfo::MapInfo(const PlanetMap &map)
   }
 }
 
-void MapInfo::update_karbonite(const GameController &gc) {
+void MapInfo::update(const GameController &gc) {
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
       auto ml = location[i][j];
-      if (gc.can_sense_location(*ml)) {
+      auto is_sensible = gc.can_sense_location(*ml);
+      sensible[i][j] = is_sensible;
+      if (is_sensible) {
         karbonite[i][j] = gc.get_karbonite_at(*ml);
       }
     }
