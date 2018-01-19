@@ -44,7 +44,6 @@ namespace bc {
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
-#include <cassert>
 
 static void print_trace() {
   fflush(stdout);
@@ -251,12 +250,20 @@ class MapLocation {
   }
   /** @endcond */
 
+  /**
+   * Copy constructur
+   * @param map_location
+   */
   MapLocation(const MapLocation& map_location)
       : m_map_location{bc_MapLocation_clone(map_location.get_bc())},
         m_planet{map_location.get_planet()},
         m_x{map_location.get_x()},
         m_y{map_location.get_y()} {}
 
+  /**
+   * Move constructor
+   * @param map_location
+   */
   MapLocation(MapLocation&&) = default;
 
   /**
@@ -269,6 +276,11 @@ class MapLocation {
     return *this;
   }
 
+  /**
+   * Assignment operator (move)
+   * @param map_location
+   * @return the assigned MapLocation
+   */
   MapLocation& operator=(MapLocation&&) = default;
 
   // XXX: Low-level use only
@@ -296,19 +308,28 @@ class MapLocation {
    */
   int get_y() const { return m_y; }
 
-  /* Set the planets in the Battlecode world. */
+  /**
+   * Set the planet
+   * @param planet
+   */
   void set_planet(Planet planet) { m_planet = planet; }
-  /* Set the x coordinate of the location */
+
+  /**
+   * Set the x coordinate of the map location
+   * @param x
+   */
   void set_x(int x) { m_x = x; }
-  /* Set the x coordinate of the location */
+
+  /**
+   * Set the y coordinate of the map location
+   * @param y
+   */
   void set_y(int y) { m_y = y; }
 
   /*
-   *  The location one square from this one in the given direction.
-   *
-   * @param direction :
-   *
-   * return : The location one square from this one in the given direction.
+   * Returns the map location one square from this one in the given direction.
+   * @param direction
+   * @return the map location one square from this one in the given direction.
    */
   MapLocation add(Direction direction) const {
     // Hardcoded to avoid API calls
@@ -317,11 +338,11 @@ class MapLocation {
   }
 
   /*
-   *  The location one square from this one in the opposite direction.
-   *
-   * @param direction :
-   *
-   * return : the location one square from this one in the opposite direction.
+   * Returns the map location one square from this one in the opposite
+   * direction.
+   * @param direction
+   * @return the map location one square from this one in the opposite
+   * direction.
    */
   MapLocation subtract(Direction direction) const {
     // Hardcoded to avoid API calls
@@ -330,12 +351,11 @@ class MapLocation {
   }
 
   /*
-   *  The location `multiple` squares from this one in the given direction.
-   *
-   * @param direction :
-   *
-   * return : The location `multiple` squares from this one in the given
+   * Returns the map location `multiple` squares from this one in the given
    * direction.
+   * @param direction
+   * @return Returns map the location `multiple` squares from this one in the
+   * given direction.
    */
   MapLocation add_multiple(Direction direction, int multiple) const {
     // Hardcoded to avoid API calls
@@ -344,13 +364,11 @@ class MapLocation {
   }
 
   /*
-   *  The location translated from this location by `dx` in the x direction and
+   * The location translated from this location by `dx` in the x direction and
    * `dy` in the y direction.
-   *
-   * @param dx :
-   * @param dy :
-   *
-   * return : The location translated from this location by `dx` in the x
+   * @param dx
+   * @param dy
+   * @return The location translated from this location by `dx` in the x
    * direction and `dy` in the y direction.
    */
   MapLocation translate(int dx, int dy) const {
@@ -359,12 +377,10 @@ class MapLocation {
   }
 
   /*
-   *  Computes the square of the distance from this location to the specified
-   *  location. If on different planets, returns the maximum integer.
-   *
-   * @param map_location :
-   *
-   * return : the square of the distance from this location to the specified
+   * Computes the square of the distance from this location to the specified
+   * location. If on different planets, returns the maximum integer.
+   * @param map_location
+   * @return the square of the distance from this location to the specified
    * location. If on different planets, returns the maximum integer.
    */
   unsigned distance_squared_to(const MapLocation& map_location) const {
@@ -377,11 +393,9 @@ class MapLocation {
 
   /*
    *  The Direction from this location to the specified location.
-   *
    * @param map_location :
-   *
-   * return : The Direction from this location to the specified location.
-   * return : * DifferentPlanet - The locations are on different planets.
+   * @return The Direction from this location to the specified location.
+   * @throw DifferentPlanet - The locations are on different planets.
    */
   Direction direction_to(const MapLocation& map_location) const {
     auto ans = bc_MapLocation_direction_to(get_bc(), map_location.get_bc());
@@ -390,13 +404,11 @@ class MapLocation {
   }
 
   /*
-   *  Determines whether this location is adjacent to the specified location,
-   *  including diagonally. Note that squares are not adjacent to themselves,
-   *  and squares on different planets are not adjacent to each other.
-   *
-   * @param map_location :
-   *
-   * return : if this location is adjacent to the specified location
+   * Determines whether this location is adjacent to the specified location,
+   * including diagonally. Note that squares are not adjacent to themselves,
+   * and squares on different planets are not adjacent to each other.
+   * @param map_location
+   * @return if this location is adjacent to the specified location
    */
   bool is_adjacent_to(const MapLocation& map_location) const {
     // Hardcoded to avoid API calls
@@ -406,13 +418,11 @@ class MapLocation {
   }
 
   /*
-   *  Whether this location is within the distance squared range of the
-   *  specified location, inclusive. False for locations on different planets.
-   *
-   * @param range :
-   * @param map_location :
-   *
-   * return : if this location is within the distance squared range of the
+   * Whether this location is within the distance squared range of the
+   * specified location, inclusive. False for locations on different planets.
+   * @param range
+   * @param map_location
+   * @return if this location is within the distance squared range of the
    * specified location inclusive
    */
   bool is_within_range(unsigned range, const MapLocation& map_location) const {
@@ -421,22 +431,19 @@ class MapLocation {
   }
 
   /*
-   *  Overloading of the == operator
-   *
-   * @param map_location :
-   *
-   * return : If the current MapLocation is equal to map_location
+   * Overloading of the == operator
+   * @param map_location
+   * @return if the current MapLocation is equal to map_location
    */
   bool operator==(const MapLocation& map_location) const {
     return (map_location.get_planet() == m_planet and
             map_location.get_x() == m_x and map_location.get_y() == m_y);
   }
+
   /*
-   *  Overloading of the != operator
-   *
-   * @param map_location :
-   *
-   * return : If the current MapLocation is not equal to map_location
+   * Overloading of the != operator
+   * @param map_location
+   * @return if the current MapLocation is not equal to map_location
    */
   bool operator!=(const MapLocation& map_location) const {
     return !((*this) == map_location);
@@ -606,11 +613,11 @@ class Unit {
 
   UnitType get_unit_type() const { return m_unit_type; }
 
-// NOT IMPLEMENT: bc_Unit_research_level
+  // NOT IMPLEMENT: bc_Unit_research_level
 
-// FIXME: Don't use macros. Write better function names!
+  // FIXME: Don't use macros. Write better function names!
 
-// Magic!
+  // Magic!
 #define F(x) bc_Unit_##x
 #define G(x) get_##x
 #define GET(ret, var)                                  \
