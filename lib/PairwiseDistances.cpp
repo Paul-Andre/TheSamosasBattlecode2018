@@ -81,8 +81,8 @@ unsigned short PairwiseDistances::get_distance(int ax, int ay, int bx,
   }
   return (*distances)[ax][ay][bx][by];
 }
-unsigned short PairwiseDistances::get_distance(MapLocation &A,
-                                               MapLocation &B) const {
+unsigned short PairwiseDistances::get_distance(const MapLocation &A,
+                                               const MapLocation &B) const {
   int ax = A.get_x();
   int ay = A.get_y();
   int bx = B.get_x();

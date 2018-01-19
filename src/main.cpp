@@ -218,33 +218,28 @@ bool closest_pair_comp(
   return first.first < second.first;
 }
 
-bool is_surrounded(GameController &gc, MapLocation &target_location) {
-  auto x = target_location.get_x();
-  auto y = target_location.get_y();
-
-  const auto map = gc.get_starting_planet(gc.get_planet());
-
-  auto width = map.get_width();
-  auto height = map.get_height();
+bool is_surrounded(GameController &gc, MapInfo &map_info,
+                   MapLocation &target_location) {
+  auto target_x = target_location.get_x();
+  auto target_y = target_location.get_y();
 
   for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    int some_x = x + constants::DX[i];
-    int some_y = y + constants::DY[i];
+    int x = target_x + constants::DX[i];
+    int y = target_y + constants::DY[i];
 
-    if (some_x < 0 || some_x >= width || some_y < 0 || some_y >= height) {
+    if (!map_info.is_valid_location(x, y)) {
       continue;
     }
 
-    MapLocation ml(gc.get_planet(), some_x, some_y);
-    if (!map.is_passable_terrain_at(ml)) {
+    if (!map_info.passable_terrain[x][y]) {
       continue;
     }
 
-    if (!gc.can_sense_location(ml)) {
+    if (!map_info.can_sense[x][y]) {
       return false;
     }
 
-    if (!gc.has_unit_at_location(ml)) {
+    if (!map_info.has_unit[x][y]) {
       return false;
     }
   }
@@ -252,7 +247,7 @@ bool is_surrounded(GameController &gc, MapLocation &target_location) {
   return true;
 }
 
-bool is_surrounding(GameController &gc, Unit &unit) {
+bool is_surrounding(GameController &gc, MapInfo &map_info, Unit &unit) {
   if (!unit.get_location().is_on_map()) {
     return false;
   }
@@ -261,6 +256,10 @@ bool is_surrounding(GameController &gc, Unit &unit) {
   for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
     auto dir = (Direction)i;
     auto loc = ml.add(dir);
+    auto x = loc.get_x();
+    auto y = loc.get_y();
+
+    if (!map_info.is_valid_location(x, y)) continue;
 
     if (!gc.has_unit_at_location(loc)) continue;
 
@@ -299,31 +298,37 @@ void try_board_nearby_rocket(GameController &gc, Unit &unit) {
 }
 
 vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
-    GameController &gc, vector<Unit> my_units,
+    GameController &gc, MapInfo &map_info, vector<Unit> my_units,
     vector<pair<MapLocation, bool>> target_locations,
     PairwiseDistances &distances) {
-  vector<pair<unsigned short, pair<Unit, MapLocation>>> all_pairs;
-  const int MAX_DISTANCES = 10000;
+  constexpr int MAX_DISTANCES = 10000;
   bool fast_enough = my_units.size() * target_locations.size() < MAX_DISTANCES;
+
+  vector<pair<unsigned short, pair<Unit, MapLocation>>> all_pairs;
+
   for (int i = 0; i < my_units.size(); i++) {
     unsigned short min_distance = std::numeric_limits<unsigned short>::max();
     auto &my_unit = my_units[i];
     if (!my_unit.get_location().is_on_map()) continue;
-    auto surrounding = is_surrounding(gc, my_unit);
+    auto surrounding = is_surrounding(gc, map_info, my_unit);
 
     pair<Unit, MapLocation> min_pair =
         make_pair(my_unit, MapLocation(gc.get_planet(), 0, 0));
+
+    auto ml = my_unit.get_map_location();
     if (fast_enough) {
-      for (int j = 0; j < target_locations.size(); j++) {
-        auto &target_location = target_locations[j].first;
-        auto surrounded = target_locations[j].second;
-        if (surrounding && gc.can_sense_location(target_location)) {
-          if (!gc.has_unit_at_location(target_location)) continue;
+      for (const auto &target_location_pair : target_locations) {
+        auto &target_location = target_location_pair.first;
+        auto surrounded = target_location_pair.second;
+        auto x = target_location.get_x();
+        auto y = target_location.get_y();
+
+        if (surrounding && map_info.can_sense[x][y]) {
+          if (!map_info.has_unit[x][y]) continue;
           auto other_unit = gc.sense_unit_at_location(target_location);
           if (other_unit.get_team() == gc.get_team()) continue;
         }
 
-        auto ml = my_unit.get_map_location();
         auto distance = distances.get_distance(ml, target_location);
         if (surrounded && distance > 1) {
           continue;
@@ -339,16 +344,13 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
         int some_y = my_unit.get_map_location().get_y() + constants::DY[k];
         const auto map = gc.get_starting_planet(gc.get_planet());
 
-        if (some_x < 0 || some_x >= map.get_width() || some_y < 0 ||
-            some_y >= map.get_height()) {
-          continue;
-        }
+        if (!map_info.is_valid_location(some_x, some_y)) continue;
 
-        MapLocation ml(gc.get_planet(), some_x, some_y);
-        if (gc.has_unit_at_location(ml)) {
-          auto unit = gc.sense_unit_at_location(ml);
+        if (map_info.has_unit[some_x][some_y]) {
+          auto some_ml = map_info.location[some_x][some_y];
+          auto unit = gc.sense_unit_at_location(*some_ml);
           if (unit.get_team() != gc.get_team()) {
-            min_pair = make_pair(my_unit, ml);
+            min_pair = make_pair(my_unit, *some_ml);
             min_distance = 1;
           }
         }
@@ -359,14 +361,15 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
         int j = rand() % target_locations.size();
         auto &target_location = target_locations[j].first;
         auto surrounded = target_locations[j].second;
+        auto x = target_location.get_x();
+        auto y = target_location.get_y();
 
-        if (surrounding && gc.can_sense_location(target_location)) {
-          if (!gc.has_unit_at_location(target_location)) continue;
+        if (surrounding && map_info.can_sense[x][y]) {
+          if (!map_info.has_unit[x][y]) continue;
           auto other_unit = gc.sense_unit_at_location(target_location);
           if (other_unit.get_team() == gc.get_team()) continue;
         }
 
-        auto ml = my_unit.get_map_location();
         auto distance = distances.get_distance(ml, target_location);
         if (surrounded && distance > 1) {
           continue;
@@ -492,7 +495,7 @@ int main() {
     vector<pair<MapLocation, bool>> target_locations_and_surrounded;
     for (int i = 0; i < target_locations.size(); i++) {
       auto ml = target_locations[i];
-      auto surrounded = is_surrounded(gc, ml);
+      auto surrounded = is_surrounded(gc, map_info, ml);
       target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
     }
 
@@ -541,7 +544,7 @@ int main() {
 
     else {
       for (auto &worker : my_units[Worker]) {
-        if (is_surrounding(gc, worker)) continue;
+        if (is_surrounding(gc, map_info, worker)) continue;
         try_board_nearby_rocket(gc, worker);
       }
 
@@ -552,10 +555,15 @@ int main() {
         if (!gc.can_launch_rocket(rocket.get_id(), ml)) continue;
         gc.launch_rocket(rocket.get_id(), ml);
       }
+
+      // TODO: Remove the need for this.
+      // We need to update this since workers might have moved after boarding.
+      map_info.update(gc);
     }
 
-    auto unit_conquering_pairs = get_closest_units(
-        gc, my_units[Worker], target_locations_and_surrounded, distances);
+    auto unit_conquering_pairs =
+        get_closest_units(gc, map_info, my_units[Worker],
+                          target_locations_and_surrounded, distances);
 
     if (unit_conquering_pairs.size() != 0) {
       auto best_distance = unit_conquering_pairs[0].first;

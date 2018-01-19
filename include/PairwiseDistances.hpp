@@ -20,7 +20,7 @@ struct PairwiseDistances {
   PairwiseDistances(vector<vector<bool>> &passable_terrain);
 
   unsigned short get_distance(int ax, int ay, int bx, int by) const;
-  unsigned short get_distance(MapLocation &A, MapLocation &B) const;
+  unsigned short get_distance(const MapLocation &A, const MapLocation &B) const;
 
   ~PairwiseDistances();
 };

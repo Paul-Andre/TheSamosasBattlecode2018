@@ -12,10 +12,11 @@ struct MapInfo {
   const Planet planet;
 
   // Convention: [x][y].
-  vector<vector<unsigned>> karbonite;
-  vector<vector<bool>> sensible;
-  vector<vector<bool>> passable_terrain;
   vector<vector<MapLocation *>> location;
+  vector<vector<unsigned>> karbonite;
+  vector<vector<bool>> passable_terrain;
+  vector<vector<bool>> can_sense;
+  vector<vector<bool>> has_unit;
 
   MapInfo(const PlanetMap &map);
 
