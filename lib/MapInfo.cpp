@@ -24,6 +24,16 @@ MapInfo::MapInfo(const PlanetMap &map)
   }
 }
 
+MapLocation *MapInfo::get_random_passable_location() const {
+  while (true) {
+    int x = rand() % width;
+    int y = rand() % height;
+    if (passable_terrain[x][y]) {
+      return location[x][y];
+    }
+  }
+}
+
 void MapInfo::update(const GameController &gc) {
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {

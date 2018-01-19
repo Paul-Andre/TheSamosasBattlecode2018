@@ -22,6 +22,8 @@ struct MapInfo {
 
   void update(const GameController &gc);
 
+  MapLocation *get_random_passable_location() const;
+
   inline bool is_valid_location(int x, int y) const {
     return x >= 0 && x < width && y >= 0 && y < height;
   }

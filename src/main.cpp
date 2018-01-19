@@ -151,16 +151,6 @@ Unit move_worker_randomly(GameController &gc, Unit &unit,
   return unit;
 }
 
-MapLocation random_location(MapInfo &map_info) {
-  while (true) {
-    int x = rand() % map_info.width;
-    int y = rand() % map_info.height;
-    if (map_info.passable_terrain[x][y]) {
-      return MapLocation(map_info.planet, x, y);
-    }
-  }
-}
-
 bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
                UnitType unit_type) {
   for (auto &unit : my_units) {
@@ -188,10 +178,10 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
           auto new_x = x + j;
           auto new_y = y + k;
 
-          auto new_ml = MapLocation(map_info.planet, new_x, new_y);
-          if (gc.can_sense_location(new_ml)) {
-            if (gc.has_unit_at_location(new_ml) &&
-                gc.sense_unit_at_location(new_ml).get_team() != gc.get_team())
+          auto new_ml = map_info.location[new_x][new_y];
+          if (gc.can_sense_location(*new_ml)) {
+            if (gc.has_unit_at_location(*new_ml) &&
+                gc.sense_unit_at_location(*new_ml).get_team() != gc.get_team())
               build_ok = false;
           }
         }
@@ -551,9 +541,9 @@ int main() {
       for (auto &rocket : my_units[Rocket]) {
         if (!rocket.structure_is_built()) continue;
         if (rocket.get_structure_garrison().size() < 4) continue;
-        auto ml = random_location(mars_map_info);
-        if (!gc.can_launch_rocket(rocket.get_id(), ml)) continue;
-        gc.launch_rocket(rocket.get_id(), ml);
+        auto ml = mars_map_info.get_random_passable_location();
+        if (!gc.can_launch_rocket(rocket.get_id(), *ml)) continue;
+        gc.launch_rocket(rocket.get_id(), *ml);
       }
 
       // TODO: Remove the need for this.
