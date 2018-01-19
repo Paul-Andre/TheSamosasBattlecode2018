@@ -1341,8 +1341,6 @@ class GameController {
 
   Team get_winning_team() const { return bc_GameController_winning_team(m_gc); }
 
-  bc_GameController* get_bc() const { return m_gc; }
-
  private:
   bc_GameController* m_gc;
 

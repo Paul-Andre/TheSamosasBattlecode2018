@@ -6,14 +6,15 @@
 using namespace std;
 using namespace bc;
 
-/// Note that I use the 2d array convention [x][y]
 struct MapInfo {
-  int width;
-  int height;
-  Planet planet;
+  const int width;
+  const int height;
+  const Planet planet;
+
+  // Convention: [x][y].
   vector<vector<unsigned>> karbonite;
   vector<vector<bool>> passable_terrain;
-  vector<vector<bc_MapLocation *>> location;
+  vector<vector<MapLocation *>> location;
 
   MapInfo(const PlanetMap &map);
 
