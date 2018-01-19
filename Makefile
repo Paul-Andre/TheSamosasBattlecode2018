@@ -3,8 +3,7 @@ TARGET   := agent
 BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
 
-CXX      := g++
-CXXFLAGS := -std=c++14 -O2 -g
+CXXFLAGS := -std=c++14
 CXXFLAGS += -pedantic-errors -Wall
 CXXFLAGS += -Wno-keyword-macro -Wno-pessimizing-move -Wno-unused-function
 
@@ -24,7 +23,11 @@ ifeq ($(UNAME_S), Darwin)
 	LDFLAGS += -lbattlecode-darwin -lSystem -lresolv
 endif
 
-all: build $(BUILD)/Makefile.dep $(BUILD)/$(TARGET)
+all: CXXFLAGS += -O2
+all: build $(BUILD)/$(TARGET)
+
+debug: CXXFLAGS += -DBACKTRACE -DDEBUG -g
+debug: build $(BUILD)/$(TARGET)
 
 -include $(BUILD)/Makefile.dep
 
@@ -42,7 +45,7 @@ $(BUILD)/Makefile.dep: $(SRC)
 		$(CXX) $(CXXFLAGS) $(INCLUDE) -MM "$${i}" -MT $(OBJ_DIR)/$${i%.*}.o; \
 	done > $@
 
-.PHONY: all build clean depend
+.PHONY: all build clean debug depend
 
 build:
 	@mkdir -p $(OBJ_DIR)
