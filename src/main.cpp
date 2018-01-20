@@ -175,8 +175,10 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
       for (int j = -2; j <= 2; j++) {
         for (int k = -2; k <= 2; k++) {
           if (j == 0 && k == 0) continue;
+
           auto new_x = x + j;
           auto new_y = y + k;
+          if (!map_info.is_valid_location(new_x, new_y)) continue;
 
           auto new_ml = map_info.location[new_x][new_y];
           if (gc.can_sense_location(*new_ml)) {
