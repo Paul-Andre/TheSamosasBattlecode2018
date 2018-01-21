@@ -3,6 +3,7 @@
 #include <iostream>
 #include <queue>
 
+#include "GameState.hpp"
 #include "MapInfo.hpp"
 #include "PairwiseDistances.hpp"
 
@@ -396,6 +397,7 @@ int main() {
   const PlanetMap initial_planet = gc.get_starting_planet(gc.get_planet());
   const Team my_team = gc.get_team();
 
+  GameState game_state(gc);
   MapInfo map_info(initial_planet);
   MapInfo mars_map_info(gc.get_starting_planet(Mars));
 
@@ -434,17 +436,19 @@ int main() {
 
   // loop through the whole game.
   while (true) {
-    uint32_t round = gc.get_round();
-    int start_s = clock();
-    printf("Round: %d. \n", round);
-    printf("Karbonite: %d. \n", gc.get_karbonite());
+    game_state.update(gc);
     map_info.update(gc);
+
+    int start_s = clock();
+    printf("Round: %d. \n", game_state.round);
+    printf("Karbonite: %d. \n", game_state.karbonite);
 
     // Note that all operations perform copies out of their data structures,
     // returning new objects.
 
     // Spam rocket building.
-    if (round > 125 && round % 25 == 0 && gc.get_planet() == Earth) {
+    if (game_state.round > 125 && game_state.round % 25 == 0 &&
+        game_state.PLANET == Earth) {
       command_queue.push({BuildRocket});
     }
 

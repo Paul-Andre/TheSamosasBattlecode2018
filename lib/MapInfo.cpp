@@ -1,5 +1,4 @@
 #include "MapInfo.hpp"
-#include <bc.h>
 
 using namespace std;
 using namespace bc;
