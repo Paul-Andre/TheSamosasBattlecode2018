@@ -10,6 +10,7 @@ struct GameState {
   const Team TEAM;
   const Planet PLANET;
 
+  GameController& gc;
   uint32_t round;
   unsigned karbonite;
 
@@ -20,5 +21,5 @@ struct GameState {
 
   GameState(GameController& gc);
 
-  void update(GameController& gc);
+  void update();
 };

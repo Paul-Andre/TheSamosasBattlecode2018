@@ -436,7 +436,7 @@ int main() {
 
   // loop through the whole game.
   while (true) {
-    game_state.update(gc);
+    game_state.update();
     map_info.update(gc);
 
     int start_s = clock();
