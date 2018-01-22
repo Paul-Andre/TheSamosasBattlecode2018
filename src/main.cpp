@@ -510,6 +510,18 @@ int main() {
       }
     }
 
+    for (auto &ranger : my_units[Ranger]) {
+      if (ranger.get_location().is_in_space() || ranger.get_location().is_in_garrison()) continue;
+      MapLocation mloc = ranger.get_location().get_map_location();
+      
+      auto enemies_within_range = gc.sense_nearby_units(mloc, 50);
+      for (Unit enemy : enemies_within_range) {
+        if (gc.is_attack_ready(ranger.get_id()) && gc.can_attack(ranger.get_id(), enemy.get_id())) {
+          gc.attack(ranger.get_id(), enemy.get_id());
+        }
+      }
+    }
+
     // Put original locations in target
     for (const auto &elem : enemy_initial_units) {
       target_locations.push_back(elem.second.get_map_location());
