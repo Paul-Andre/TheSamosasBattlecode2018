@@ -5,10 +5,9 @@ OBJ_DIR  := $(BUILD)/objects
 
 CXXFLAGS := -std=c++14
 CXXFLAGS += -pedantic-errors -Wall
-CXXFLAGS += -Wno-keyword-macro -Wno-pessimizing-move -Wno-unused-function
 
 LDFLAGS  := -L../battlecode/c/lib -lm -lc
-INCLUDE  := -I../battlecode/c/include -Iinclude
+INCLUDE  := -isystem../battlecode/c/include -isystemexternal -Iinclude
 SRC      := \
 	$(wildcard src/*.cpp) \
 	$(wildcard lib/*.cpp)
