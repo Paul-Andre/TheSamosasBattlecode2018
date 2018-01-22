@@ -117,6 +117,7 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
   return unit;
 }
 
+
 Unit move_worker_randomly(GameController &gc, Unit &unit,
                           bool should_replicate) {
   uint16_t id = unit.get_id();
@@ -150,6 +151,32 @@ Unit move_worker_randomly(GameController &gc, Unit &unit,
   build(gc, unit);
 
   return unit;
+}
+
+void move_unit(GameController &gc, Unit &unit, MapLocation &goal,
+                 PairwiseDistances &pd) {
+  uint16_t id = unit.get_id();
+  MapLocation ml = unit.get_map_location();
+  Direction dir;
+
+  dir = silly_pathfinding(gc, ml, goal, pd);
+  if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
+    gc.move_robot(id, dir);
+  }
+}
+
+void move_unit_randomly(GameController &gc, Unit &unit) {
+  uint16_t id = unit.get_id();
+  MapLocation ml = unit.get_map_location();
+
+  auto seed = rand();
+  for (int i = 0; i < 8; i++) {
+    auto dir = (Direction)((i + seed) % 8);
+    if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
+      gc.move_robot(id, dir);
+      break;
+    }
+  }
 }
 
 bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
@@ -431,7 +458,7 @@ int main() {
   int start_s = clock();
 
   vector<pair<int, int>> point_kernel = {{0, 0}};
-  PairwiseDistances distances(map_info.passable_terrain, point_kernel);
+  PairwiseDistances point_distances(map_info.passable_terrain, point_kernel);
 
   // XXX: magic number from the specs
   vector<pair<int, int>> ranger_attack_kernel = make_kernel(10, 50);
@@ -504,40 +531,12 @@ int main() {
       }
     }
 
-    if (gc.get_planet() == Earth) {
-      // Put our rockets into the target vector
-      for (int i = 0; i < (int)my_units[Rocket].size(); i++) {
-        target_locations.push_back(my_units[Rocket][i].get_map_location());
-      }
-    }
-
-    for (auto &ranger : my_units[Ranger]) {
-      if (ranger.get_location().is_in_space() ||
-          ranger.get_location().is_in_garrison())
-        continue;
-      MapLocation mloc = ranger.get_location().get_map_location();
-
-      auto enemies_within_range = gc.sense_nearby_units(mloc, 50);
-      for (Unit enemy : enemies_within_range) {
-        if (gc.is_attack_ready(ranger.get_id()) &&
-            gc.can_attack(ranger.get_id(), enemy.get_id())) {
-          gc.attack(ranger.get_id(), enemy.get_id());
-        }
-      }
-    }
-
     // Put original locations in target
     for (const auto &elem : enemy_initial_units) {
       target_locations.push_back(elem.second.get_map_location());
     }
 
-    // Get whether they are surrounded
-    vector<pair<MapLocation, bool>> target_locations_and_surrounded;
-    for (int i = 0; i < (int)target_locations.size(); i++) {
-      auto ml = target_locations[i];
-      auto surrounded = is_surrounded(gc, map_info, ml);
-      target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
-    }
+    
 
     // Spam factory buildings.
     if (game_state.round >= 60 && game_state.round % 25 == 11 &&
@@ -624,16 +623,79 @@ int main() {
       map_info.update(gc);
     }
 
-    auto unit_conquering_pairs =
-        get_closest_units(gc, map_info, my_units[Worker],
-                          target_locations_and_surrounded, distances);
+    // Decide where to move rangers
+    vector<pair<MapLocation, bool>> target_locations_for_rangers;
+    for (int i = 0; i < (int)target_locations.size(); i++) {
+      auto ml = target_locations[i];
+      target_locations_for_rangers.push_back(make_pair(ml, false));
+    }
+    auto ranger_conquering_pairs =
+      get_closest_units(gc, map_info, my_units[Ranger],
+          target_locations_for_rangers, ranger_attack_distances);
 
-    if (unit_conquering_pairs.size() != 0) {
-      auto best_distance = unit_conquering_pairs[0].first;
+    // Move rangers (and potentially all military units)
+    for (auto &unit_conquering_pair : ranger_conquering_pairs) {
+      auto distance = unit_conquering_pair.first;
+
+      Unit &unit = unit_conquering_pair.second.first;
+      MapLocation goal = unit_conquering_pair.second.second;
+
+      if (distance == std::numeric_limits<unsigned short>::max()) {
+        // goal invalid: ignore and explore.
+        move_unit_randomly(gc, unit);
+      } else {
+        move_unit(gc, unit, goal, ranger_attack_distances);
+      }
+    }
+
+    // Rangers attack
+    for (auto &ranger : my_units[Ranger]) {
+      if (ranger.get_location().is_in_space() ||
+          ranger.get_location().is_in_garrison())
+        continue;
+      MapLocation mloc = ranger.get_location().get_map_location();
+
+      auto enemies_within_range = gc.sense_nearby_units(mloc, 50);
+      for (Unit enemy : enemies_within_range) {
+        if (gc.is_attack_ready(ranger.get_id()) &&
+            gc.can_attack(ranger.get_id(), enemy.get_id())) {
+          gc.attack(ranger.get_id(), enemy.get_id());
+        }
+      }
+    }
+
+    // Add rockets for workers
+    if (gc.get_planet() == Earth) {
+      // Put our rockets into the target vector
+      for (int i = 0; i < (int)my_units[Rocket].size(); i++) {
+        target_locations.push_back(my_units[Rocket][i].get_map_location());
+      }
+      for (int i = 0; i < (int)my_units[Factory].size(); i++) {
+        if (my_units[Factory][i].structure_is_built() == false) {
+          target_locations.push_back(my_units[Factory][i].get_map_location());
+        }
+      }
+    }
+
+
+    // Get whether enemy units are already surrounded
+    vector<pair<MapLocation, bool>> target_locations_and_surrounded;
+    for (int i = 0; i < (int)target_locations.size(); i++) {
+      auto ml = target_locations[i];
+      auto surrounded = is_surrounded(gc, map_info, ml);
+      target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
+    }
+
+    auto worker_conquering_pairs =
+        get_closest_units(gc, map_info, my_units[Worker],
+                          target_locations_and_surrounded, point_distances);
+
+    if (worker_conquering_pairs.size() != 0) {
+      auto best_distance = worker_conquering_pairs[0].first;
 
       int replicated_this_turn = 0;
 
-      for (auto &unit_conquering_pair : unit_conquering_pairs) {
+      for (auto &unit_conquering_pair : worker_conquering_pairs) {
         auto distance = unit_conquering_pair.first;
 
         Unit &replication_unit = unit_conquering_pair.second.first;
@@ -666,7 +728,7 @@ int main() {
                 move_worker_randomly(gc, replication_unit, should_replicate);
           } else {
             maybe_replicated = move_worker(gc, replication_unit, goal,
-                                           distances, should_replicate);
+                                           point_distances, should_replicate);
           }
           if (maybe_replicated.get_id() != replication_id) {
             replication_unit = maybe_replicated;
