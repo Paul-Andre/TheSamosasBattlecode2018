@@ -4,6 +4,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <cmath>
 #include <queue>
 
 using namespace bc;
