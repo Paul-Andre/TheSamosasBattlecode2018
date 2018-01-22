@@ -557,6 +557,23 @@ int main() {
         gc.launch_rocket(rocket.get_id(), *ml);
       }
 
+      for (auto &factory : my_units[Factory]) {
+        uint16_t id = factory.get_id();
+        if (!factory.structure_is_built()) continue;
+        vector<unsigned int> garrison = factory.get_structure_garrison();
+        for (int j = 0; j < (int) garrison.size(); j++) {
+	  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+	    auto dir = Direction(i);
+	    if (gc.can_unload(id, dir)) {
+	      gc.unload(id, dir);
+	    }
+	  }
+        }
+        if (gc.can_produce_robot(id, Ranger)) {
+          gc.produce_robot(id, Ranger);
+        }
+      }
+
       // TODO: Remove the need for this.
       // We need to update this since workers might have moved after boarding.
       map_info.update(gc);
