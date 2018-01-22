@@ -33,7 +33,7 @@ void harvest(GameController &gc, Unit &unit) {
     if (gc.can_harvest(id, dir)) {
       auto ml = unit.get_map_location().add(dir);
       if (gc.can_sense_location(ml)) {
-        int karbonite = gc.get_karbonite_at(ml);
+        auto karbonite = gc.get_karbonite_at(ml);
         if (karbonite > max_karbonite) {
           max_karbonite = karbonite;
           best_dir = dir;
@@ -173,8 +173,13 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
       }
 
       bool build_ok = true;
-      for (int j = -2; j <= 2; j++) {
-        for (int k = -2; k <= 2; k++) {
+
+      int distance_from_enemy = 2;
+      if (unit_type == Rocket) distance_from_enemy = 2;
+      if (unit_type == Factory) distance_from_enemy = 1;
+
+      for (int j = -distance_from_enemy; j <= distance_from_enemy; j++) {
+        for (int k = -distance_from_enemy; k <= distance_from_enemy; k++) {
           if (j == 0 && k == 0) continue;
 
           auto new_x = x + j;
@@ -446,12 +451,6 @@ int main() {
     // Note that all operations perform copies out of their data structures,
     // returning new objects.
 
-    // Spam rocket building.
-    if (game_state.round > 125 && game_state.round % 25 == 0 &&
-        game_state.PLANET == Earth) {
-      command_queue.push({BuildRocket});
-    }
-
     // Get all units and split into them depending on team and type
     vector<Unit> all_units = gc.get_units();
     vector<vector<Unit>> my_units(constants::N_UNIT_TYPES);
@@ -493,6 +492,12 @@ int main() {
       auto ml = target_locations[i];
       auto surrounded = is_surrounded(gc, map_info, ml);
       target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
+    }
+
+    // Spam factory buildings.
+    if (game_state.round >= 60 && game_state.round % 25 == 1 &&
+        game_state.PLANET == Earth && my_units[Factory].size() < 3) {
+      command_queue.push({BuildFactory});
     }
 
     // Check if we have enough karbonite to do the next thing
@@ -582,7 +587,7 @@ int main() {
               // Check if we have enough ressources for the closest worker to
               // get to its destination
               auto karb = gc.get_karbonite();
-              if (5 * (best_distance / 2) <= karb) {
+              if (20 * (best_distance / 2) <= karb) {
                 should_replicate = true;
               } else {
                 should_replicate = false;
