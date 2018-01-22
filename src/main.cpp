@@ -536,8 +536,6 @@ int main() {
       target_locations.push_back(elem.second.get_map_location());
     }
 
-    
-
     // Spam factory buildings.
     if (game_state.round >= 60 && game_state.round % 25 == 11 &&
         game_state.PLANET == Earth && my_units[Factory].size() < 3) {

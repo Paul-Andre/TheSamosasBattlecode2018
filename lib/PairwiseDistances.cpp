@@ -108,7 +108,7 @@ vector<pair<int, int>> make_kernel(int min_distance_squared,
   vector<pair<int, int>> ret;
   int distance_bound = sqrt(max_distance_squared) + 5;
   for (int i = -distance_bound; i <= distance_bound; i++) {
-    for (int j = -distance_bound; j <= distance_bound; i++) {
+    for (int j = -distance_bound; j <= distance_bound; j++) {
       int distance_squared = i * i + j * j;
       if (distance_squared <= max_distance_squared &&
           distance_squared > min_distance_squared) {
