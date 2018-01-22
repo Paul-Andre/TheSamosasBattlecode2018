@@ -1,17 +1,17 @@
 #include "PairwiseDistances.hpp"
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <memory>
-#include <cmath>
 #include <queue>
 
 using namespace bc;
 using namespace std;
 
 PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain,
-    vector<PairwiseDistances::pii> &kernel) {
+                                     vector<PairwiseDistances::pii> &kernel) {
   distances = (HugeArray *)malloc(sizeof(HugeArray));
   assert(distances != nullptr);
   int n = (int)passable_terrain.size();
@@ -40,7 +40,7 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain,
 
       std::queue<pii> q;
 
-      for (int k=0; k<kernel.size(); k++) {
+      for (int k = 0; k < kernel.size(); k++) {
         int x = i + kernel[k].first;
         int y = j + kernel[k].second;
 
@@ -103,14 +103,16 @@ unsigned short PairwiseDistances::get_distance(const MapLocation &A,
 PairwiseDistances::~PairwiseDistances() { free(distances); }
 
 // Takes square distances
-vector<pair<int,int>> make_kernel(int min_distance_squared, int max_distance_squared) {
-  vector<pair<int,int>> ret;
+vector<pair<int, int>> make_kernel(int min_distance_squared,
+                                   int max_distance_squared) {
+  vector<pair<int, int>> ret;
   int distance_bound = sqrt(max_distance_squared) + 5;
-  for (int i=-distance_bound ; i<= distance_bound; i++) {
-    for (int j=-distance_bound ; j<= distance_bound; i++) {
-      int distance_squared = i*i + j*j;
-      if (distance_squared <= max_distance_squared && distance_squared > min_distance_squared) {
-        ret.push_back(make_pair(i,j));
+  for (int i = -distance_bound; i <= distance_bound; i++) {
+    for (int j = -distance_bound; j <= distance_bound; i++) {
+      int distance_squared = i * i + j * j;
+      if (distance_squared <= max_distance_squared &&
+          distance_squared > min_distance_squared) {
+        ret.push_back(make_pair(i, j));
       }
     }
   }
