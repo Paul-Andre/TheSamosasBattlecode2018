@@ -33,7 +33,7 @@ void harvest(GameController &gc, Unit &unit) {
     if (gc.can_harvest(id, dir)) {
       auto ml = unit.get_map_location().add(dir);
       if (gc.can_sense_location(ml)) {
-        auto karbonite = gc.get_karbonite_at(ml);
+        int karbonite = gc.get_karbonite_at(ml);
         if (karbonite > max_karbonite) {
           max_karbonite = karbonite;
           best_dir = dir;
@@ -299,7 +299,7 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
 
   vector<pair<unsigned short, pair<Unit, MapLocation>>> all_pairs;
 
-  for (int i = 0; i < my_units.size(); i++) {
+  for (int i = 0; i < (int)my_units.size(); i++) {
     unsigned short min_distance = std::numeric_limits<unsigned short>::max();
     auto &my_unit = my_units[i];
     if (!my_unit.get_location().is_on_map()) continue;
@@ -489,7 +489,7 @@ int main() {
 
     // Get whether they are surrounded
     vector<pair<MapLocation, bool>> target_locations_and_surrounded;
-    for (int i = 0; i < target_locations.size(); i++) {
+    for (int i = 0; i < (int)target_locations.size(); i++) {
       auto ml = target_locations[i];
       auto surrounded = is_surrounded(gc, map_info, ml);
       target_locations_and_surrounded.push_back(make_pair(ml, surrounded));
