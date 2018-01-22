@@ -9,7 +9,8 @@
 using namespace bc;
 using namespace std;
 
-PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
+PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain,
+    vector<PairwiseDistances::pii> &kernel) {
   distances = (HugeArray *)malloc(sizeof(HugeArray));
   assert(distances != nullptr);
   int n = (int)passable_terrain.size();
@@ -38,8 +39,16 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain) {
 
       std::queue<pii> q;
 
-      q.push(pii(i, j));
-      visited[i][j] = true;
+      for (int k=0; k<kernel.size(); k++) {
+        int x = i + kernel[k].first;
+        int y = j + kernel[k].second;
+
+        if (x >= 0 && x < n && y >= 0 && y < m && !visited[x][y] &&
+            pass[x][y]) {
+          q.push(pii(x, y));
+          visited[x][y] = true;
+        }
+      }
 
       unsigned short dist = 0;
 

@@ -429,7 +429,8 @@ int main() {
   MapInfo mars_map_info(gc.get_starting_planet(Mars));
 
   int start_s = clock();
-  PairwiseDistances distances(map_info.passable_terrain);
+  vector<pair<int,int>> point_kernel = {{0,0}};
+  PairwiseDistances distances(map_info.passable_terrain, point_kernel);
   int stop_s = clock();
   cout << "Analyzing map took "
        << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << " milliseconds"
