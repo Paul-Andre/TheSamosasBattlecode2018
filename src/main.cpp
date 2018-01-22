@@ -117,7 +117,6 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
   return unit;
 }
 
-
 Unit move_worker_randomly(GameController &gc, Unit &unit,
                           bool should_replicate) {
   uint16_t id = unit.get_id();
@@ -154,7 +153,7 @@ Unit move_worker_randomly(GameController &gc, Unit &unit,
 }
 
 void move_unit(GameController &gc, Unit &unit, MapLocation &goal,
-                 PairwiseDistances &pd) {
+               PairwiseDistances &pd) {
   uint16_t id = unit.get_id();
   MapLocation ml = unit.get_map_location();
   Direction dir;
@@ -627,9 +626,9 @@ int main() {
       auto ml = target_locations[i];
       target_locations_for_rangers.push_back(make_pair(ml, false));
     }
-    auto ranger_conquering_pairs =
-      get_closest_units(gc, map_info, my_units[Ranger],
-          target_locations_for_rangers, ranger_attack_distances);
+    auto ranger_conquering_pairs = get_closest_units(
+        gc, map_info, my_units[Ranger], target_locations_for_rangers,
+        ranger_attack_distances);
 
     // Move rangers (and potentially all military units)
     for (auto &unit_conquering_pair : ranger_conquering_pairs) {
@@ -674,7 +673,6 @@ int main() {
         }
       }
     }
-
 
     // Get whether enemy units are already surrounded
     vector<pair<MapLocation, bool>> target_locations_and_surrounded;
