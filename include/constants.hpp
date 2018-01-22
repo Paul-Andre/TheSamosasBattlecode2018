@@ -22,4 +22,11 @@ constexpr static int DY[N_DIRECTIONS] = {1, 1, 0, -1, -1, -1, 0, 1, 0};
 constexpr static bc::Direction DIRECTIONS[N_DIRECTIONS] = {
     North,     Northeast, East,      Southeast, South,
     Southwest, West,      Northwest, Center};
+
+// Costs.
+const static int BLUEPRINT_ROCKET_COST =
+    bc::unit_type_get_blueprint_cost(Rocket);
+const static int BLUEPRINT_FACTORY_COST =
+    bc::unit_type_get_blueprint_cost(Factory);
+
 }  // namespace constants

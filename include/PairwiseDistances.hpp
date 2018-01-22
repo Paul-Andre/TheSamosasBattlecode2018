@@ -17,7 +17,8 @@ struct PairwiseDistances {
   HugeArray *distances;
 
   /// Takes a collision map `coll`
-  PairwiseDistances(vector<vector<bool>> &passable_terrain, vector<pii> &kernel);
+  PairwiseDistances(vector<vector<bool>> &passable_terrain,
+                    vector<pii> &kernel);
 
   unsigned short get_distance(int ax, int ay, int bx, int by) const;
   unsigned short get_distance(const MapLocation &A, const MapLocation &B) const;
@@ -26,4 +27,5 @@ struct PairwiseDistances {
 };
 
 // Takes square distances
-vector<pair<int,int>> make_kernel(int min_distance_squared, int max_distance_squared);
+vector<pair<int, int>> make_kernel(int min_distance_squared,
+                                   int max_distance_squared);

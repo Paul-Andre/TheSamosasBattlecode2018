@@ -200,19 +200,19 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
       // wherever you can
       int max_obstruction = 4;
       int obstruction = 0;
-      for (int k=0; k<constants::N_DIRECTIONS; k++) {
+      for (int k = 0; k < constants::N_DIRECTIONS; k++) {
         int xx = x + constants::DX[k];
         int yy = y + constants::DY[k];
 
-        if (!map_info.is_valid_location(xx,yy)) {
-          obstruction ++;
+        if (!map_info.is_valid_location(xx, yy)) {
+          obstruction++;
           continue;
         }
-        if (!map_info.passable_terrain[xx][yy]) obstruction ++;
+        if (!map_info.passable_terrain[xx][yy]) obstruction++;
         if (map_info.has_unit[xx][yy]) {
           auto ml = MapLocation(map_info.planet, xx, yy);
           auto other_unit = gc.sense_unit_at_location(ml);
-          if (other_unit.get_team() != gc.get_team()) obstruction ++;
+          if (other_unit.get_team() != gc.get_team()) obstruction++;
         }
       }
       if (obstruction > max_obstruction) build_ok = false;
@@ -430,12 +430,13 @@ int main() {
 
   int start_s = clock();
 
-  vector<pair<int,int>> point_kernel = {{0,0}};
+  vector<pair<int, int>> point_kernel = {{0, 0}};
   PairwiseDistances distances(map_info.passable_terrain, point_kernel);
 
   // XXX: magic number from the specs
-  vector<pair<int,int>> ranger_attack_kernel = make_kernel(10, 50);
-  PairwiseDistances ranger_attack_distances(map_info.passable_terrain, ranger_attack_kernel);
+  vector<pair<int, int>> ranger_attack_kernel = make_kernel(10, 50);
+  PairwiseDistances ranger_attack_distances(map_info.passable_terrain,
+                                            ranger_attack_kernel);
 
   int stop_s = clock();
   cout << "Analyzing map took "
@@ -511,12 +512,15 @@ int main() {
     }
 
     for (auto &ranger : my_units[Ranger]) {
-      if (ranger.get_location().is_in_space() || ranger.get_location().is_in_garrison()) continue;
+      if (ranger.get_location().is_in_space() ||
+          ranger.get_location().is_in_garrison())
+        continue;
       MapLocation mloc = ranger.get_location().get_map_location();
-      
+
       auto enemies_within_range = gc.sense_nearby_units(mloc, 50);
       for (Unit enemy : enemies_within_range) {
-        if (gc.is_attack_ready(ranger.get_id()) && gc.can_attack(ranger.get_id(), enemy.get_id())) {
+        if (gc.is_attack_ready(ranger.get_id()) &&
+            gc.can_attack(ranger.get_id(), enemy.get_id())) {
           gc.attack(ranger.get_id(), enemy.get_id());
         }
       }
@@ -602,13 +606,13 @@ int main() {
         uint16_t id = factory.get_id();
         if (!factory.structure_is_built()) continue;
         vector<unsigned int> garrison = factory.get_structure_garrison();
-        for (int j = 0; j < (int) garrison.size(); j++) {
-	  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-	    auto dir = Direction(i);
-	    if (gc.can_unload(id, dir)) {
-	      gc.unload(id, dir);
-	    }
-	  }
+        for (int j = 0; j < (int)garrison.size(); j++) {
+          for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+            auto dir = Direction(i);
+            if (gc.can_unload(id, dir)) {
+              gc.unload(id, dir);
+            }
+          }
         }
         if (gc.can_produce_robot(id, Ranger)) {
           gc.produce_robot(id, Ranger);
