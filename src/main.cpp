@@ -652,7 +652,7 @@ int main() {
         continue;
       MapLocation mloc = ranger.get_location().get_map_location();
 
-      auto enemies_within_range = gc.sense_nearby_units(mloc, 50);
+      auto enemies_within_range = gc.sense_nearby_units_by_team(mloc, 50, Team(1 - gc.get_team()));
       for (Unit enemy : enemies_within_range) {
         if (gc.is_attack_ready(ranger.get_id()) &&
             gc.can_attack(ranger.get_id(), enemy.get_id())) {
@@ -660,6 +660,8 @@ int main() {
         }
       }
     }
+
+    map_info.update(gc);
 
     // Add rockets for workers
     if (gc.get_planet() == Earth) {
