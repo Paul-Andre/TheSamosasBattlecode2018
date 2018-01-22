@@ -3,6 +3,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
+#include <limits>
 #include <unordered_set>
 #include "bc.hpp"
 
@@ -19,9 +20,9 @@ constexpr static int N_ROUNDS = 1000;
 
 // Units.
 constexpr static int N_UNIT_TYPES = 8;
-const static unordered_set<bc::UnitType> ROBOT_TYPES = {Worker, Knight, Ranger,
-                                                        Mage, Healer};
-const static unordered_set<bc::UnitType> STRUCTURE_TYPES = {Factory, Rocket};
+const static unordered_set<unsigned> ROBOT_TYPES = {Worker, Knight, Ranger,
+                                                    Mage, Healer};
+const static unordered_set<unsigned> STRUCTURE_TYPES = {Factory, Rocket};
 
 // Directions.
 constexpr static int N_DIRECTIONS = 9;
