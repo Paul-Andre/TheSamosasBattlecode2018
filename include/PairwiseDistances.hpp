@@ -24,3 +24,6 @@ struct PairwiseDistances {
 
   ~PairwiseDistances();
 };
+
+// Takes square distances
+vector<pair<int,int>> make_kernel(int min_distance_squared, int max_distance_squared);
