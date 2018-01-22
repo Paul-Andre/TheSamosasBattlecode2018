@@ -37,6 +37,7 @@
 # Misc
 .DS_Store
 *~
+*.swp
 
 # Editors
 .vscode

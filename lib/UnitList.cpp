@@ -6,7 +6,14 @@ UnitList::UnitList(GameController& gc, const Team& team)
       WIDTH(gc.get_starting_planet(PLANET).get_width()),
       HEIGHT(gc.get_starting_planet(PLANET).get_height()),
       by_location(WIDTH, vector<unsigned>(HEIGHT)),
-      is_occupied(WIDTH, vector<bool>(HEIGHT)) {}
+      is_occupied(WIDTH, vector<bool>(HEIGHT)) {
+  const auto planet_map = gc.get_starting_planet(gc.get_planet());
+  for (const auto& unit : planet_map.get_initial_units()) {
+    const auto id = unit.get_id();
+    const auto loc = unit.get_map_location();
+    initial_workers[id] = loc;
+  }
+}
 
 void UnitList::add(unsigned id, UnitType unit_type, MapLocation loc) {
   const auto x = loc.get_x();
@@ -57,8 +64,8 @@ void UnitList::update(GameController& gc) {
     by_type[i].clear();
   }
 
-  for (int i = 0; i < (int)WIDTH; i++) {
-    for (int j = 0; j < (int)HEIGHT; j++) {
+  for (int i = 0; i < WIDTH; i++) {
+    for (int j = 0; j < HEIGHT; j++) {
       MapLocation ml(PLANET, i, j);
 
       is_occupied[i][j] = false;
@@ -68,10 +75,22 @@ void UnitList::update(GameController& gc) {
         if (gc.has_unit_at_location(ml)) {
           auto unit = gc.sense_unit_at_location(ml);
           if (unit.get_team() == TEAM) {
-            add(unit.get_id(), unit.get_unit_type(), ml);
+            const auto id = unit.get_id();
+            add(id, unit.get_unit_type(), ml);
+            if (initial_workers.count(id)) {
+              initial_workers.erase(id);
+            }
           }
         }
       }
     }
+  }
+
+  // Insert initial units that haven't been seen yet.
+  unordered_set<unsigned> to_erase;
+  for (const auto& worker : initial_workers) {
+    const auto id = worker.first;
+    const auto loc = worker.second;
+    add(id, Worker, loc);
   }
 }

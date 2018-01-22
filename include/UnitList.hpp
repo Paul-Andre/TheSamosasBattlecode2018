@@ -22,6 +22,8 @@ struct UnitList {
   vector<vector<unsigned>> by_location;
   vector<vector<bool>> is_occupied;
 
+  unordered_map<unsigned, MapLocation> initial_workers;
+
   UnitList(GameController& gc, const Team& team);
 
   void add(unsigned id, UnitType unit_type, MapLocation loc);
