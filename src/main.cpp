@@ -653,7 +653,7 @@ int main() {
       MapLocation mloc = ranger.get_location().get_map_location();
 
       auto enemies_within_range =
-          gc.sense_nearby_units_by_team(mloc, 50, Team(1 - gc.get_team()));
+          gc.sense_nearby_units_by_team(mloc, 50, game_state.ENEMY_TEAM);
       for (Unit enemy : enemies_within_range) {
         if (gc.is_attack_ready(ranger.get_id()) &&
             gc.can_attack(ranger.get_id(), enemy.get_id())) {

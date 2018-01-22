@@ -7,7 +7,8 @@ using namespace bc;
 using namespace std;
 
 struct GameState {
-  const Team TEAM;
+  const Team MY_TEAM;
+  const Team ENEMY_TEAM;
   const Planet PLANET;
 
   GameController& gc;
