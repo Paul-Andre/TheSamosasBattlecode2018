@@ -58,7 +58,7 @@ void UnitList::update(GameController& gc) {
   }
 
   for (int i = 0; i < (int)WIDTH; i++) {
-    for (int j = 0; i < (int)HEIGHT; i++) {
+    for (int j = 0; j < (int)HEIGHT; j++) {
       MapLocation ml(PLANET, i, j);
 
       is_occupied[i][j] = false;
