@@ -195,6 +195,28 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
         }
       }
 
+      // How much enemies and unpassable cells are allowed around
+      // TODO: this might not always be possible. In that case build it
+      // wherever you can
+      int max_obstruction = 4;
+      int obstruction = 0;
+      for (int k=0; k<constants::N_DIRECTIONS; k++) {
+        int xx = x + constants::DX[k];
+        int yy = y + constants::DY[k];
+
+        if (!map_info.is_valid_location(xx,yy)) {
+          obstruction ++;
+          continue;
+        }
+        if (!map_info.passable_terrain[xx][yy]) obstruction ++;
+        if (map_info.has_unit[xx][yy]) {
+          auto ml = MapLocation(map_info.planet, xx, yy);
+          auto other_unit = gc.sense_unit_at_location(ml);
+          if (other_unit.get_team() != gc.get_team()) obstruction ++;
+        }
+      }
+      if (obstruction > max_obstruction) build_ok = false;
+
       if (!build_ok) continue;
 
       auto dir = (Direction)i;
