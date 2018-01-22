@@ -1,8 +1,5 @@
 #pragma once
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-
 #include <limits>
 #include <unordered_set>
 #include "bc.hpp"
@@ -109,7 +106,5 @@ const static unsigned RESEARCH_COST[N_UNIT_TYPES][N_RESEARCH_LEVELS] = {
         numeric_limits<unsigned>::max(),
     },
 };
-
-#pragma GCC diagnostic pop
 
 }  // namespace constants
