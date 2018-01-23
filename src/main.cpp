@@ -562,7 +562,7 @@ int main() {
     }
 
     // Spam factory buildings.
-    if (game_state.round >= 60 && game_state.round % 15 == 1 &&
+    if (game_state.round >= 25 && game_state.round % 15 == 1 &&
         game_state.PLANET == Earth && my_units[Factory].size() < 3) {
       command_queue.push({BuildFactory});
     }
