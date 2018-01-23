@@ -47,7 +47,7 @@ void harvest(GameController &gc, Unit &unit) {
   }
 }
 
-void build(GameController &gc, Unit &unit) {
+void build_or_repair(GameController &gc, Unit &unit) {
   auto worker_id = unit.get_id();
   auto ml = unit.get_map_location();
   for (int i = 0; i < 9; i++) {
@@ -72,7 +72,32 @@ void build(GameController &gc, Unit &unit) {
 
     gc.build(worker_id, struct_id);
 
-    break;
+    return;
+  }
+  for (int i = 0; i < 9; i++) {
+    auto dir = (Direction)i;
+    auto loc = ml.add(dir);
+
+    if (!gc.has_unit_at_location(loc)) continue;
+
+    auto other = gc.sense_unit_at_location(loc);
+
+    if (other.get_team() != gc.get_team()) continue;
+
+    auto type = other.get_unit_type();
+
+    if (type != Factory && type != Rocket) continue;
+
+    if (!other.structure_is_built()) continue;
+    if (other.get_health() == other.get_max_health()) continue;
+
+    auto struct_id = other.get_id();
+
+    if (!gc.can_repair(worker_id, struct_id)) continue;
+
+    gc.repair(worker_id, struct_id);
+
+    return;
   }
 }
 
@@ -112,7 +137,7 @@ Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
   }
 
   harvest(gc, unit);
-  build(gc, unit);
+  build_or_repair(gc, unit);
 
   return unit;
 }
@@ -147,7 +172,7 @@ Unit move_worker_randomly(GameController &gc, Unit &unit,
   }
 
   harvest(gc, unit);
-  build(gc, unit);
+  build_or_repair(gc, unit);
 
   return unit;
 }
@@ -484,11 +509,12 @@ int main() {
   // First thing get some research going
   if (gc.get_planet() == Earth) {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker
-    gc.queue_research(UnitType::Rocket);  // To mars
-    gc.queue_research(UnitType::Worker);  // Increase build speed
-    gc.queue_research(UnitType::Worker);  // Increase build speed
-    gc.queue_research(UnitType::Worker);  // Increase build speed
     gc.queue_research(UnitType::Ranger);  // Faster ranger
+    gc.queue_research(UnitType::Worker);  // Increase build speed
+    gc.queue_research(UnitType::Rocket);  // To Mars
+
+    gc.queue_research(UnitType::Worker);  // Increase build speed
+    gc.queue_research(UnitType::Worker);  // Increase build speed
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision
     gc.queue_research(UnitType::Ranger);  // Snipe
   }
@@ -536,9 +562,13 @@ int main() {
     }
 
     // Spam factory buildings.
-    if (game_state.round >= 60 && game_state.round % 25 == 11 &&
+    if (game_state.round >= 60 && game_state.round % 15 == 1 &&
         game_state.PLANET == Earth && my_units[Factory].size() < 3) {
       command_queue.push({BuildFactory});
+    }
+    else if (game_state.round >= 200 && game_state.round % 15 == 1 &&
+        game_state.PLANET == Earth) {
+      command_queue.push({BuildRocket});
     }
 
     // Check if we have enough karbonite to do the next thing
@@ -590,6 +620,10 @@ int main() {
         try_board_nearby_rocket(gc, worker);
       }
 
+      for (auto &ranger : my_units[Ranger]) {
+        try_board_nearby_rocket(gc, ranger);
+      }
+
       for (auto &rocket : my_units[Rocket]) {
         if (!rocket.structure_is_built()) continue;
         if (rocket.get_structure_garrison().size() < 4) continue;
@@ -610,7 +644,7 @@ int main() {
             }
           }
         }
-        if (gc.can_produce_robot(id, Ranger)) {
+        if (command_queue.empty() && gc.can_produce_robot(id, Ranger)) {
           gc.produce_robot(id, Ranger);
         }
       }
