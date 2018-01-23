@@ -645,15 +645,15 @@ int main() {
           }
         }
 
-        UnitType to_produce;
         if (my_units[Worker].size() < 8) {
-          to_produce = Worker;
+          if (gc.can_produce_robot(id, Worker)) {
+            gc.produce_robot(id, Worker);
+          }
         }
         else {
-          to_produce = Ranger;
-        }
-        if (command_queue.empty() && gc.can_produce_robot(id, to_produce)) {
-          gc.produce_robot(id, to_produce);
+          if (command_queue.empty() && gc.can_produce_robot(id, Ranger)) {
+            gc.produce_robot(id, Ranger);
+          }
         }
       }
 
