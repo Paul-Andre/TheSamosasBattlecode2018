@@ -1,8 +1,13 @@
 #pragma once
 
+#include <iostream>
+
+#include <limits>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "GameState.hpp"
+#include "TargetSearch.hpp"
 #include "constants.hpp"
 #include "silly_pathfinding.hpp"
 
@@ -10,7 +15,7 @@ using namespace std;
 
 class Strategy {
  public:
-  virtual void run(GameState &game_state, unordered_set<unsigned> units) == 0;
+  virtual void run(GameState &game_state, unordered_set<unsigned> units) = 0;
 };
 
 class RobotStrategy : public Strategy {
@@ -65,10 +70,10 @@ class RobotStrategy : public Strategy {
 
 class WorkerStrategy : public RobotStrategy {
  protected:
-  unsigned maybe_move_and_replicate(GameState &game_state, unsigned worker_id,
-                                    const MapLocation &goal,
-                                    const PairwiseDistances &pd,
-                                    bool should_replicate) {
+  void maybe_move_and_replicate(GameState &game_state, unsigned worker_id,
+                                const MapLocation &goal,
+                                const PairwiseDistances &pd,
+                                bool should_replicate) {
     auto loc = game_state.my_units.by_id[worker_id].second;
     auto dir = silly_pathfinding(game_state.gc, loc, goal, pd);
     if (game_state.gc.can_move(worker_id, dir) &&
@@ -80,14 +85,18 @@ class WorkerStrategy : public RobotStrategy {
     if (should_replicate) {
       dir = silly_pathfinding(game_state.gc, loc, goal, pd);
       if (game_state.gc.can_replicate(worker_id, dir)) {
-        return game_state.replicate(worker_id, dir);
+        const auto replicated_id = game_state.replicate(worker_id, dir);
+        return maybe_move_and_replicate(game_state, replicated_id, goal, pd,
+                                        false);
       } else {
         const auto seed = rand();
         for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
           auto dir =
               (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
           if (game_state.gc.can_replicate(worker_id, dir)) {
-            return game_state.replicate(worker_id, dir);
+            const auto replicated_id = game_state.replicate(worker_id, dir);
+            return maybe_move_and_replicate(game_state, replicated_id, goal, pd,
+                                            false);
           }
         }
       }
@@ -95,13 +104,11 @@ class WorkerStrategy : public RobotStrategy {
 
     maybe_harvest(game_state, worker_id);
     maybe_build_or_repair(game_state, worker_id);
-
-    return worker_id;
   }
 
-  unsigned maybe_move_and_replicate_randomly(GameState &game_state,
-                                             unsigned worker_id,
-                                             bool should_replicate) {
+  void maybe_move_and_replicate_randomly(GameState &game_state,
+                                         unsigned worker_id,
+                                         bool should_replicate) {
     auto seed = rand();
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
       const auto dir =
@@ -119,15 +126,15 @@ class WorkerStrategy : public RobotStrategy {
         const auto dir =
             (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
         if (game_state.gc.can_replicate(worker_id, dir)) {
-          return game_state.replicate(worker_id, dir);
+          const auto replicated_id = game_state.replicate(worker_id, dir);
+          return maybe_move_and_replicate_randomly(game_state, replicated_id,
+                                                   false);
         }
       }
     }
 
     maybe_harvest(game_state, worker_id);
     maybe_build_or_repair(game_state, worker_id);
-
-    return worker_id;
   }
 
   bool maybe_harvest(GameState &game_state, unsigned worker_id) {
@@ -263,5 +270,60 @@ class WorkerStrategy : public RobotStrategy {
       }
     }
     return true;
+  }
+};
+
+class WorkerRushStrategy : public WorkerStrategy {
+  const PairwiseDistances distances;
+
+ public:
+  WorkerRushStrategy(const PairwiseDistances &distances)
+      : distances(distances) {}
+
+  void run(GameState &game_state, unordered_set<unsigned> workers) {
+    vector<MapLocation> target_locations;
+
+    unordered_map<uint16_t, unsigned> n_max_targetting;
+    for (const auto &unit : game_state.enemy_units.by_id) {
+      const auto loc = unit.second.second;
+      target_locations.push_back(loc);
+
+      const auto x = loc.get_x();
+      const auto y = loc.get_y();
+      const uint16_t hash = (x << 8) + y;
+      n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
+                               count_obstructions(game_state, x, y);
+    }
+
+    const auto targets =
+        find_targets(game_state, workers, target_locations, distances);
+
+    unordered_map<uint16_t, unsigned> n_targetting;
+    unordered_set<unsigned> targetting;
+
+    auto should_replicate = true;
+    for (const auto &target : targets) {
+      if (target.distance == numeric_limits<uint16_t>::max()) continue;
+
+      const uint16_t hash = (target.x << 8) + target.y;
+      if (n_targetting[hash] >= n_max_targetting[hash]) continue;
+      if (targetting.count(target.id)) continue;
+
+      const auto loc = game_state.map_info.location[target.x][target.y];
+      if (game_state.is_surrounded(*loc) && target.distance > 1) continue;
+
+      n_targetting[hash]++;
+      targetting.insert(target.id);
+
+      const auto goal = game_state.map_info.location[target.x][target.y];
+      maybe_move_and_replicate(game_state, target.id, *goal, distances,
+                               should_replicate);
+    }
+
+    for (const auto worker_id : workers) {
+      if (targetting.count(worker_id)) continue;
+      maybe_move_and_replicate_randomly(game_state, worker_id,
+                                        should_replicate);
+    }
   }
 };

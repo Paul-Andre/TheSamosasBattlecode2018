@@ -9,9 +9,11 @@ UnitList::UnitList(GameController& gc, const Team& team)
       is_occupied(WIDTH, vector<bool>(HEIGHT)) {
   const auto planet_map = gc.get_starting_planet(gc.get_planet());
   for (const auto& unit : planet_map.get_initial_units()) {
-    const auto id = unit.get_id();
-    const auto loc = unit.get_map_location();
-    initial_workers[id] = loc;
+    if (unit.get_team() == TEAM) {
+      const auto id = unit.get_id();
+      const auto loc = unit.get_map_location();
+      initial_workers[id] = loc;
+    }
   }
 }
 
