@@ -274,11 +274,15 @@ class WorkerStrategy : public RobotStrategy {
 };
 
 class WorkerRushStrategy : public WorkerStrategy {
+ protected:
   const PairwiseDistances distances;
+  bool should_replicate = true;
 
  public:
   WorkerRushStrategy(const PairwiseDistances &distances)
       : distances(distances) {}
+
+  void set_should_replicate(bool status) { should_replicate = status; }
 
   void run(GameState &game_state, unordered_set<unsigned> workers) {
     vector<MapLocation> target_locations;
@@ -301,7 +305,6 @@ class WorkerRushStrategy : public WorkerStrategy {
     unordered_map<uint16_t, unsigned> n_targetting;
     unordered_set<unsigned> targetting;
 
-    auto should_replicate = true;
     for (const auto &target : targets) {
       if (target.distance == numeric_limits<uint16_t>::max()) continue;
 
