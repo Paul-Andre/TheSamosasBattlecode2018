@@ -30,7 +30,7 @@ class RobotStrategy : public Strategy {
     }
   }
 
-  void move(GameState &game_state, unsigned unit_id) {
+  void move_randomly(GameState &game_state, unsigned unit_id) {
     auto seed = rand();
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
       auto dir = (Direction)((i + seed) % 8);
