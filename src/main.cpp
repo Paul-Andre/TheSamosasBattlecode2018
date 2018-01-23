@@ -696,6 +696,9 @@ int main() {
 
       auto enemies_within_range =
           gc.sense_nearby_units_by_team(mloc, 50, game_state.ENEMY_TEAM);
+      sort(enemies_within_range.begin(), enemies_within_range.end(), [](const Unit &a, const Unit &b) {
+          return a.get_health() < b.get_health();
+          });
       for (Unit enemy : enemies_within_range) {
         if (gc.is_attack_ready(ranger.get_id()) &&
             gc.can_attack(ranger.get_id(), enemy.get_id())) {
