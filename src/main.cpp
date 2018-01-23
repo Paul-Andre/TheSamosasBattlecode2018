@@ -45,15 +45,12 @@ int main() {
 
   int start_s = clock();
 
-  vector<pair<int, int>> point_kernel = {{0, 0}};
   PairwiseDistances point_distances(game_state.map_info.passable_terrain,
-                                    point_kernel);
+                                    constants::POINT_KERNEL);
   WorkerRushStrategy worker_rush(point_distances);
 
-  // XXX: magic number from the specs
-  vector<pair<int, int>> ranger_attack_kernel = make_kernel(10, 50);
   PairwiseDistances ranger_attack_distances(
-      game_state.map_info.passable_terrain, ranger_attack_kernel);
+      game_state.map_info.passable_terrain, constants::RANGER_KERNEL);
 
   int stop_s = clock();
   cout << "Analyzing map took "

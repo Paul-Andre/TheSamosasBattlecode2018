@@ -10,8 +10,9 @@
 using namespace bc;
 using namespace std;
 
-PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain,
-                                     vector<PairwiseDistances::pii> &kernel) {
+PairwiseDistances::PairwiseDistances(
+    const vector<vector<bool>> &passable_terrain,
+    const vector<PairwiseDistances::pii> &kernel) {
   distances = (HugeArray *)malloc(sizeof(HugeArray));
   assert(distances != nullptr);
   int n = (int)passable_terrain.size();

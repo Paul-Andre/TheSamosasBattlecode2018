@@ -2,7 +2,13 @@
 
 #include <limits>
 #include <unordered_set>
+#include <vector>
+
 #include "bc.hpp"
+
+// FIXME: Copied from PairwiseDistances.hpp.
+std::vector<std::pair<int, int>> make_kernel(int min_distance_squared,
+                                             int max_distance_squared);
 
 using namespace std;
 
@@ -106,5 +112,12 @@ const static unsigned RESEARCH_COST[N_UNIT_TYPES][N_RESEARCH_LEVELS] = {
         numeric_limits<unsigned>::max(),
     },
 };
+
+// // Pairwise distances kernels.
+// // XXX: magic number from the specs.
+const static vector<pair<int, int>> POINT_KERNEL = {{0, 0}};
+const static vector<pair<int, int>> RANGER_KERNEL = make_kernel(10, 50);
+const static vector<pair<int, int>> MAGE_KERNEL = make_kernel(-1, 30);
+const static vector<pair<int, int>> HEALER_KERNEL = make_kernel(-1, 30);
 
 }  // namespace constants
