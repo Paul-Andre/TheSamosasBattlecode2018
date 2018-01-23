@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -9,7 +11,8 @@
 
 // TODO: make some kind of GameState object that I can pass easily
 Direction silly_pathfinding(GameController &gc, const MapLocation &start,
-                            const MapLocation &goal, PairwiseDistances &pd) {
+                            const MapLocation &goal,
+                            const PairwiseDistances &pd) {
   int unit_x = start.get_x();
   int unit_y = start.get_y();
 

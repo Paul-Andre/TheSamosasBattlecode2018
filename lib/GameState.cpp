@@ -88,6 +88,13 @@ void GameState::launch(unsigned rocket_id, const MapLocation &loc) {
   // TODO: Update units around the rocket if they were destroyed.
 }
 
+void GameState::attack(unsigned id, unsigned target_id) {
+  gc.attack(id, target_id);
+  if (gc.get_unit(target_id).get_health() == 0) {
+    enemy_units.remove(target_id);
+  }
+}
+
 void GameState::harvest(unsigned id, Direction dir) {
   const auto loc = my_units.by_id[id].second.add(dir);
   const auto x = loc.get_x();
