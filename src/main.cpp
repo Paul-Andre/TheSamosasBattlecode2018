@@ -6,6 +6,7 @@
 #include "GameState.hpp"
 #include "MapInfo.hpp"
 #include "PairwiseDistances.hpp"
+#include "Strategy.hpp"
 #include "TargetSearch.hpp"
 
 #include "bc.hpp"
@@ -24,340 +25,6 @@ enum BuildCommandType {
 struct BuildCommand {
   BuildCommandType type;
 };
-
-void harvest(GameController &gc, Unit &unit) {
-  auto id = unit.get_id();
-  Direction best_dir = Center;
-  unsigned max_karbonite = 0;
-  for (int i = 0; i < constants::N_DIRECTIONS; i++) {
-    auto dir = (Direction)i;
-    if (gc.can_harvest(id, dir)) {
-      auto ml = unit.get_map_location().add(dir);
-      if (gc.can_sense_location(ml)) {
-        auto karbonite = gc.get_karbonite_at(ml);
-        if (karbonite > max_karbonite) {
-          max_karbonite = karbonite;
-          best_dir = dir;
-        }
-      }
-    }
-  }
-
-  if (gc.can_harvest(id, best_dir)) {
-    gc.harvest(id, best_dir);
-  }
-}
-
-void build_or_repair(GameController &gc, Unit &unit) {
-  auto worker_id = unit.get_id();
-  auto ml = unit.get_map_location();
-  for (int i = 0; i < 9; i++) {
-    auto dir = (Direction)i;
-    auto loc = ml.add(dir);
-
-    if (!gc.has_unit_at_location(loc)) continue;
-
-    auto other = gc.sense_unit_at_location(loc);
-
-    if (other.get_team() != gc.get_team()) continue;
-
-    auto type = other.get_unit_type();
-
-    if (type != Factory && type != Rocket) continue;
-
-    if (other.structure_is_built()) continue;
-
-    auto struct_id = other.get_id();
-
-    if (!gc.can_build(worker_id, struct_id)) continue;
-
-    gc.build(worker_id, struct_id);
-
-    return;
-  }
-  for (int i = 0; i < 9; i++) {
-    auto dir = (Direction)i;
-    auto loc = ml.add(dir);
-
-    if (!gc.has_unit_at_location(loc)) continue;
-
-    auto other = gc.sense_unit_at_location(loc);
-
-    if (other.get_team() != gc.get_team()) continue;
-
-    auto type = other.get_unit_type();
-
-    if (type != Factory && type != Rocket) continue;
-
-    if (!other.structure_is_built()) continue;
-    if (other.get_health() == other.get_max_health()) continue;
-
-    auto struct_id = other.get_id();
-
-    if (!gc.can_repair(worker_id, struct_id)) continue;
-
-    gc.repair(worker_id, struct_id);
-
-    return;
-  }
-}
-
-Unit move_worker(GameController &gc, Unit &unit, MapLocation &goal,
-                 PairwiseDistances &pd, bool should_replicate) {
-  uint16_t id = unit.get_id();
-  MapLocation ml = unit.get_map_location();
-  Direction dir;
-
-  dir = silly_pathfinding(gc, ml, goal, pd);
-  if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-    gc.move_robot(id, dir);
-    ml = ml.add(dir);
-    unit = gc.get_unit(id);
-  }
-
-  if (should_replicate) {
-    dir = silly_pathfinding(gc, ml, goal, pd);
-    if (gc.can_replicate(id, dir)) {
-      gc.replicate(id, dir);
-      auto replicated_location = unit.get_map_location().add(dir);
-      auto replicated_unit = gc.sense_unit_at_location(replicated_location);
-      return replicated_unit;
-    } else {
-      auto seed = rand();
-      for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-        auto dir =
-            (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
-        if (gc.can_replicate(id, dir)) {
-          gc.replicate(id, dir);
-          auto replicated_location = unit.get_map_location().add(dir);
-          auto replicated_unit = gc.sense_unit_at_location(replicated_location);
-          return replicated_unit;
-        }
-      }
-    }
-  }
-
-  harvest(gc, unit);
-  build_or_repair(gc, unit);
-
-  return unit;
-}
-
-Unit move_worker_randomly(GameController &gc, Unit &unit,
-                          bool should_replicate) {
-  uint16_t id = unit.get_id();
-  MapLocation ml = unit.get_map_location();
-
-  auto seed = rand();
-  for (int i = 0; i < 8; i++) {
-    auto dir = (Direction)((i + seed) % 8);
-    if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-      gc.move_robot(id, dir);
-      ml = ml.add(dir);
-      unit = gc.get_unit(id);
-      break;
-    }
-  }
-
-  if (should_replicate) {
-    seed = rand();
-    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-      auto dir = (Direction)((i + seed) % 8);
-      if (gc.can_replicate(id, dir)) {
-        gc.replicate(id, dir);
-        auto replicated_location = unit.get_map_location().add(dir);
-        auto replicated_unit = gc.sense_unit_at_location(replicated_location);
-        return replicated_unit;
-      }
-    }
-  }
-
-  harvest(gc, unit);
-  build_or_repair(gc, unit);
-
-  return unit;
-}
-
-void move_unit(GameState &game_state, unsigned unit_id, const MapLocation &goal,
-               PairwiseDistances &pd) {
-  const auto &ml = game_state.my_units.by_id[unit_id].second;
-  const auto dir = silly_pathfinding(game_state.gc, ml, goal, pd);
-  if (game_state.gc.can_move(unit_id, dir) &&
-      game_state.gc.is_move_ready(unit_id)) {
-    game_state.move(unit_id, dir);
-  }
-}
-
-void move_unit_randomly(GameState &game_state, unsigned unit_id) {
-  auto seed = rand();
-  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    auto dir = (Direction)((i + seed) % 8);
-    if (game_state.gc.can_move(unit_id, dir) &&
-        game_state.gc.is_move_ready(unit_id)) {
-      game_state.move(unit_id, dir);
-      return;
-    }
-  }
-}
-
-bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
-               UnitType unit_type) {
-  for (auto &unit : my_units) {
-    auto id = unit.get_id();
-    auto loc = unit.get_location();
-    if (!loc.is_on_map()) {
-      continue;
-    }
-
-    auto ml = loc.get_map_location();
-    auto unit_x = ml.get_x();
-    auto unit_y = ml.get_y();
-
-    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-      auto x = unit_x + constants::DX[i];
-      auto y = unit_y + constants::DY[i];
-      if (!map_info.is_valid_location(x, y)) {
-        continue;
-      }
-
-      bool build_ok = true;
-
-      int distance_from_enemy = 2;
-      if (unit_type == Rocket) distance_from_enemy = 2;
-      if (unit_type == Factory) distance_from_enemy = 1;
-
-      for (int j = -distance_from_enemy; j <= distance_from_enemy; j++) {
-        for (int k = -distance_from_enemy; k <= distance_from_enemy; k++) {
-          if (j == 0 && k == 0) continue;
-
-          auto new_x = x + j;
-          auto new_y = y + k;
-          if (!map_info.is_valid_location(new_x, new_y)) continue;
-
-          auto new_ml = map_info.location[new_x][new_y];
-          if (gc.can_sense_location(*new_ml)) {
-            if (gc.has_unit_at_location(*new_ml) &&
-                gc.sense_unit_at_location(*new_ml).get_team() != gc.get_team())
-              build_ok = false;
-          }
-        }
-      }
-
-      // How much enemies and unpassable cells are allowed around
-      // TODO: this might not always be possible. In that case build it
-      // wherever you can
-      int max_obstruction = 4;
-      int obstruction = 0;
-      for (int k = 0; k < constants::N_DIRECTIONS; k++) {
-        int xx = x + constants::DX[k];
-        int yy = y + constants::DY[k];
-
-        if (!map_info.is_valid_location(xx, yy)) {
-          obstruction++;
-          continue;
-        }
-        if (!map_info.passable_terrain[xx][yy]) obstruction++;
-        if (map_info.has_unit[xx][yy]) {
-          auto ml = MapLocation(map_info.planet, xx, yy);
-          auto other_unit = gc.sense_unit_at_location(ml);
-          if (other_unit.get_team() != gc.get_team()) obstruction++;
-        }
-      }
-      if (obstruction > max_obstruction) build_ok = false;
-
-      if (!build_ok) continue;
-
-      auto dir = (Direction)i;
-      if (map_info.passable_terrain[x][y]) {
-        if (gc.can_blueprint(id, unit_type, dir)) {
-          gc.blueprint(id, unit_type, dir);
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
-}
-
-bool is_surrounded(GameController &gc, MapInfo &map_info,
-                   MapLocation &target_location) {
-  auto target_x = target_location.get_x();
-  auto target_y = target_location.get_y();
-
-  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    int x = target_x + constants::DX[i];
-    int y = target_y + constants::DY[i];
-
-    if (!map_info.is_valid_location(x, y)) {
-      continue;
-    }
-
-    if (!map_info.passable_terrain[x][y]) {
-      continue;
-    }
-
-    if (!map_info.can_sense[x][y]) {
-      return false;
-    }
-
-    if (!map_info.has_unit[x][y]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool is_surrounding(GameController &gc, MapInfo &map_info, Unit &unit) {
-  if (!unit.get_location().is_on_map()) {
-    return false;
-  }
-
-  auto ml = unit.get_map_location();
-  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    auto dir = (Direction)i;
-    auto loc = ml.add(dir);
-    auto x = loc.get_x();
-    auto y = loc.get_y();
-
-    if (!map_info.is_valid_location(x, y)) continue;
-
-    if (!gc.has_unit_at_location(loc)) continue;
-
-    auto other = gc.sense_unit_at_location(loc);
-
-    if (other.get_team() != gc.get_team()) return true;
-  }
-
-  return false;
-}
-
-void try_board_nearby_rocket(GameController &gc, Unit &unit) {
-  auto worker_id = unit.get_id();
-  if (!unit.get_location().is_on_map()) {
-    return;
-  }
-
-  auto ml = unit.get_map_location();
-  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    auto dir = (Direction)i;
-    auto loc = ml.add(dir);
-
-    if (!gc.has_unit_at_location(loc)) continue;
-
-    auto other = gc.sense_unit_at_location(loc);
-
-    if (other.get_team() != gc.get_team()) continue;
-
-    if (other.get_unit_type() != Rocket) continue;
-
-    // It's a rocket!
-    if (!gc.can_load(other.get_id(), worker_id)) continue;
-
-    gc.load(other.get_id(), worker_id);
-  }
-}
 
 vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
     GameController &gc, MapInfo &map_info, vector<Unit> my_units,
@@ -469,35 +136,23 @@ int main() {
   const Team my_team = gc.get_team();
 
   GameState game_state(gc);
-  MapInfo map_info(initial_planet);
   MapInfo mars_map_info(gc.get_starting_planet(Mars));
 
   int start_s = clock();
 
   vector<pair<int, int>> point_kernel = {{0, 0}};
-  PairwiseDistances point_distances(map_info.passable_terrain, point_kernel);
+  PairwiseDistances point_distances(game_state.map_info.passable_terrain,
+                                    point_kernel);
 
   // XXX: magic number from the specs
   vector<pair<int, int>> ranger_attack_kernel = make_kernel(10, 50);
-  PairwiseDistances ranger_attack_distances(map_info.passable_terrain,
-                                            ranger_attack_kernel);
+  PairwiseDistances ranger_attack_distances(
+      game_state.map_info.passable_terrain, ranger_attack_kernel);
 
   int stop_s = clock();
   cout << "Analyzing map took "
        << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << " milliseconds"
        << endl;
-
-  // Get the location for some bot from the opposite team
-  vector<Unit> initial_units = initial_planet.get_initial_units();
-
-  // TODO: enemies might be separated by barriers
-  unordered_map<unsigned, Unit> enemy_initial_units;
-  for (int i = 0; i < (int)initial_units.size(); i++) {
-    Unit &unit = initial_units[i];
-    if (unit.get_team() != my_team) {
-      enemy_initial_units[unit.get_id()] = unit;
-    }
-  }
 
   // First thing get some research going
   if (gc.get_planet() == Earth) {
@@ -523,40 +178,10 @@ int main() {
     printf("Round: %d. \n", game_state.round);
     printf("Karbonite: %d. \n", game_state.karbonite);
 
-    // Note that all operations perform copies out of their data structures,
-    // returning new objects.
-
-    // Get all units and split into them depending on team and type
-    vector<Unit> all_units = gc.get_units();
-    vector<vector<Unit>> my_units(constants::N_UNIT_TYPES);
-    vector<vector<Unit>> enemy_units(constants::N_UNIT_TYPES);
-    vector<MapLocation> target_locations;
-
-    for (int i = 0; i < (int)all_units.size(); i++) {
-      // TODO: move them out instead of this copying(?)
-      Unit &unit = all_units[i];
-      if (unit.get_team() == my_team) {
-        my_units[unit.get_unit_type()].push_back(unit);
-      } else {
-        auto id = unit.get_id();
-        enemy_units[unit.get_unit_type()].push_back(unit);
-        if (enemy_initial_units.count(id) > 0) {
-          enemy_initial_units.erase(id);
-        }
-        if (unit.get_location().is_on_map()) {
-          target_locations.push_back(unit.get_map_location());
-        }
-      }
-    }
-
-    // Put original locations in target
-    for (const auto &elem : enemy_initial_units) {
-      target_locations.push_back(elem.second.get_map_location());
-    }
-
     // Spam factory buildings.
     if (game_state.round >= 25 && game_state.round % 15 == 1 &&
-        game_state.PLANET == Earth && my_units[Factory].size() < 3) {
+        game_state.PLANET == Earth &&
+        game_state.my_units.by_type[Factory].size() < 3) {
       command_queue.push({BuildFactory});
     } else if (game_state.round >= 200 && game_state.round % 15 == 1 &&
                game_state.PLANET == Earth) {
@@ -570,7 +195,7 @@ int main() {
       auto karb = gc.get_karbonite();
       did_something = false;
       if (command_queue.back().type == BuildRocket &&
-          karb >= unit_type_get_blueprint_cost(Rocket)) {
+          karb >= constants::BLUEPRINT_COST[Rocket]) {
         if (blueprint(map_info, gc, my_units[Worker], Rocket)) {
           command_queue.pop();
           did_something = true;
@@ -578,7 +203,7 @@ int main() {
         }
       }
       if (command_queue.back().type == BuildFactory &&
-          karb >= unit_type_get_blueprint_cost(Factory)) {
+          karb >= constants::BLUEPRINT_COST[Factory]) {
         if (blueprint(map_info, gc, my_units[Worker], Factory)) {
           command_queue.pop();
           did_something = true;
