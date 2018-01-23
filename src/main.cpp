@@ -27,7 +27,7 @@ struct BuildCommand {
 void harvest(GameController &gc, Unit &unit) {
   auto id = unit.get_id();
   Direction best_dir = Center;
-  int max_karbonite = 0;
+  unsigned max_karbonite = 0;
   for (int i = 0; i < constants::N_DIRECTIONS; i++) {
     auto dir = (Direction)i;
     if (gc.can_harvest(id, dir)) {
@@ -694,7 +694,8 @@ int main() {
         continue;
       MapLocation mloc = ranger.get_location().get_map_location();
 
-      auto enemies_within_range = gc.sense_nearby_units_by_team(mloc, 50, Team(1 - gc.get_team()));
+      auto enemies_within_range =
+          gc.sense_nearby_units_by_team(mloc, 50, game_state.ENEMY_TEAM);
       for (Unit enemy : enemies_within_range) {
         if (gc.is_attack_ready(ranger.get_id()) &&
             gc.can_attack(ranger.get_id(), enemy.get_id())) {
