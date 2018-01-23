@@ -6,6 +6,7 @@
 #include "GameState.hpp"
 #include "MapInfo.hpp"
 #include "PairwiseDistances.hpp"
+#include "TargetSearch.hpp"
 
 #include "bc.hpp"
 #include "constants.hpp"
@@ -177,28 +178,24 @@ Unit move_worker_randomly(GameController &gc, Unit &unit,
   return unit;
 }
 
-void move_unit(GameController &gc, Unit &unit, MapLocation &goal,
+void move_unit(GameState &game_state, unsigned unit_id, const MapLocation &goal,
                PairwiseDistances &pd) {
-  uint16_t id = unit.get_id();
-  MapLocation ml = unit.get_map_location();
-  Direction dir;
-
-  dir = silly_pathfinding(gc, ml, goal, pd);
-  if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-    gc.move_robot(id, dir);
+  const auto &ml = game_state.my_units.by_id[unit_id].second;
+  const auto dir = silly_pathfinding(game_state.gc, ml, goal, pd);
+  if (game_state.gc.can_move(unit_id, dir) &&
+      game_state.gc.is_move_ready(unit_id)) {
+    game_state.move(unit_id, dir);
   }
 }
 
-void move_unit_randomly(GameController &gc, Unit &unit) {
-  uint16_t id = unit.get_id();
-  MapLocation ml = unit.get_map_location();
-
+void move_unit_randomly(GameState &game_state, unsigned unit_id) {
   auto seed = rand();
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
     auto dir = (Direction)((i + seed) % 8);
-    if (gc.can_move(id, dir) && gc.is_move_ready(id)) {
-      gc.move_robot(id, dir);
-      break;
+    if (game_state.gc.can_move(unit_id, dir) &&
+        game_state.gc.is_move_ready(unit_id)) {
+      game_state.move(unit_id, dir);
+      return;
     }
   }
 }
@@ -657,27 +654,18 @@ int main() {
     }
 
     // Decide where to move rangers
-    vector<pair<MapLocation, bool>> target_locations_for_rangers;
-    for (int i = 0; i < (int)target_locations.size(); i++) {
-      auto ml = target_locations[i];
-      target_locations_for_rangers.push_back(make_pair(ml, false));
-    }
-    auto ranger_conquering_pairs = get_closest_units(
-        gc, map_info, my_units[Ranger], target_locations_for_rangers,
-        ranger_attack_distances);
+    const auto &ranger_targets =
+        find_targets(game_state, game_state.my_units.by_type[Ranger],
+                     target_locations, ranger_attack_distances);
 
     // Move rangers (and potentially all military units)
-    for (auto &unit_conquering_pair : ranger_conquering_pairs) {
-      auto distance = unit_conquering_pair.first;
-
-      Unit &unit = unit_conquering_pair.second.first;
-      MapLocation goal = unit_conquering_pair.second.second;
-
-      if (distance == std::numeric_limits<unsigned short>::max()) {
+    for (auto &target : ranger_targets) {
+      if (target.distance == std::numeric_limits<unsigned short>::max()) {
         // goal invalid: ignore and explore.
-        move_unit_randomly(gc, unit);
+        move_unit_randomly(game_state, target.id);
       } else {
-        move_unit(gc, unit, goal, ranger_attack_distances);
+        const auto loc = game_state.map_info.location[target.x][target.y];
+        move_unit(game_state, target.id, *loc, ranger_attack_distances);
       }
     }
 

@@ -8,8 +8,8 @@
 #include "constants.hpp"
 
 // TODO: make some kind of GameState object that I can pass easily
-Direction silly_pathfinding(GameController &gc, MapLocation &start,
-                            MapLocation &goal, PairwiseDistances &pd) {
+Direction silly_pathfinding(GameController &gc, const MapLocation &start,
+                            const MapLocation &goal, PairwiseDistances &pd) {
   int unit_x = start.get_x();
   int unit_y = start.get_y();
 
