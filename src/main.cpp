@@ -283,12 +283,6 @@ bool blueprint(MapInfo &map_info, GameController &gc, vector<Unit> my_units,
   return false;
 }
 
-bool closest_pair_comp(
-    const pair<unsigned short, pair<Unit, MapLocation>> &first,
-    const pair<unsigned short, pair<Unit, MapLocation>> &second) {
-  return first.first < second.first;
-}
-
 bool is_surrounded(GameController &gc, MapInfo &map_info,
                    MapLocation &target_location) {
   auto target_x = target_location.get_x();
@@ -453,7 +447,9 @@ vector<pair<unsigned short, pair<Unit, MapLocation>>> get_closest_units(
     }
     all_pairs.push_back(make_pair(min_distance, min_pair));
   }
-  sort(all_pairs.begin(), all_pairs.end(), closest_pair_comp);
+
+  sort(all_pairs.begin(), all_pairs.end(),
+       [](const auto &a, const auto &b) { return a.first < b.first; });
 
   return all_pairs;
 }
@@ -565,9 +561,8 @@ int main() {
     if (game_state.round >= 25 && game_state.round % 15 == 1 &&
         game_state.PLANET == Earth && my_units[Factory].size() < 3) {
       command_queue.push({BuildFactory});
-    }
-    else if (game_state.round >= 200 && game_state.round % 15 == 1 &&
-        game_state.PLANET == Earth) {
+    } else if (game_state.round >= 200 && game_state.round % 15 == 1 &&
+               game_state.PLANET == Earth) {
       command_queue.push({BuildRocket});
     }
 
@@ -649,8 +644,7 @@ int main() {
           if (gc.can_produce_robot(id, Worker)) {
             gc.produce_robot(id, Worker);
           }
-        }
-        else {
+        } else {
           if (command_queue.empty() && gc.can_produce_robot(id, Ranger)) {
             gc.produce_robot(id, Ranger);
           }
@@ -696,9 +690,10 @@ int main() {
 
       auto enemies_within_range =
           gc.sense_nearby_units_by_team(mloc, 50, game_state.ENEMY_TEAM);
-      sort(enemies_within_range.begin(), enemies_within_range.end(), [](const Unit &a, const Unit &b) {
-          return a.get_health() < b.get_health();
-          });
+      sort(enemies_within_range.begin(), enemies_within_range.end(),
+           [](const Unit &a, const Unit &b) {
+             return a.get_health() < b.get_health();
+           });
       for (Unit enemy : enemies_within_range) {
         if (gc.is_attack_ready(ranger.get_id()) &&
             gc.can_attack(ranger.get_id(), enemy.get_id())) {
