@@ -16,7 +16,6 @@ struct MapInfo {
   vector<vector<unsigned>> karbonite;
   vector<vector<bool>> passable_terrain;
   vector<vector<bool>> can_sense;
-  vector<vector<bool>> has_unit;
 
   MapInfo(const PlanetMap &map);
 

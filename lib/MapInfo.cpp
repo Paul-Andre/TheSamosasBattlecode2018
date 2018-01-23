@@ -10,8 +10,7 @@ MapInfo::MapInfo(const PlanetMap &map)
       location(width, vector<MapLocation *>(height)),
       karbonite(width, vector<unsigned>(height)),
       passable_terrain(width, vector<bool>(height)),
-      can_sense(width, vector<bool>(height)),
-      has_unit(width, vector<bool>(height)) {
+      can_sense(width, vector<bool>(height)) {
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
       auto ml = new MapLocation(planet, i, j);
@@ -42,7 +41,6 @@ void MapInfo::update(const GameController &gc) {
 
       if (is_sensible) {
         karbonite[i][j] = gc.get_karbonite_at(*ml);
-        has_unit[i][j] = gc.has_unit_at_location(*ml);
       }
     }
   }
