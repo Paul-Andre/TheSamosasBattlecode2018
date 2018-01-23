@@ -40,7 +40,7 @@ PairwiseDistances::PairwiseDistances(vector<vector<bool>> &passable_terrain,
 
       std::queue<pii> q;
 
-      for (int k = 0; k < kernel.size(); k++) {
+      for (int k = 0; k < (int)kernel.size(); k++) {
         int x = i + kernel[k].first;
         int y = j + kernel[k].second;
 
