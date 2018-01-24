@@ -330,3 +330,43 @@ class WorkerRushStrategy : public WorkerStrategy {
     }
   }
 };
+
+class BuildingStrategy : public WorkerStrategy {
+ protected:
+  const UnitType &unit_type;
+
+ public:
+  BuildingStrategy(const UnitType &unit_type) : unit_type(unit_type) {}
+
+  void run(GameState &game_state, unordered_set<unsigned> workers) {}
+};
+
+class RocketBoardingStrategy : public RobotStrategy {
+ public:
+  void run(GameState &game_state, unordered_set<unsigned> robots) {}
+};
+
+class RocketLaunchingStrategy : public Strategy {
+ protected:
+  const MapInfo mars_map_info;
+  const int MIN_UNITS_TO_LAUNCH = 4;
+
+ public:
+  RocketLaunchingStrategy(GameState &game_state)
+      : mars_map_info(game_state.gc.get_starting_planet(Mars)) {}
+
+  void run(GameState &game_state, unordered_set<unsigned> rockets) {
+    for (const auto rocket_id : rockets) {
+      const auto rocket_unit = game_state.gc.get_unit(rocket_id);
+
+      if (!rocket_unit.structure_is_built()) continue;
+      if (rocket_unit.get_structure_garrison().size() < MIN_UNITS_TO_LAUNCH)
+        continue;
+
+      const auto ml = mars_map_info.get_random_passable_location();
+      if (!game_state.gc.can_launch_rocket(rocket_id, *ml)) continue;
+
+      game_state.launch(rocket_id, *ml);
+    }
+  }
+};

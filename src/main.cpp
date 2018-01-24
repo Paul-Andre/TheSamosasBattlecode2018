@@ -47,10 +47,14 @@ int main() {
 
   PairwiseDistances point_distances(game_state.map_info.passable_terrain,
                                     constants::POINT_KERNEL);
-  WorkerRushStrategy worker_rush(point_distances);
-
   PairwiseDistances ranger_attack_distances(
       game_state.map_info.passable_terrain, constants::RANGER_KERNEL);
+
+  WorkerRushStrategy worker_rush(point_distances);
+  RocketLaunchingStrategy rocket_launch(game_state);
+  RocketBoardingStrategy board_rockets{};
+  BuildingStrategy build_rockets(Rocket);
+  BuildingStrategy build_factories(Factory);
 
   int stop_s = clock();
   cout << "Analyzing map took "
