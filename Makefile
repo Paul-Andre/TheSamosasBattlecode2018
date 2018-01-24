@@ -4,7 +4,7 @@ BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
 
 CXXFLAGS := -std=c++14
-CXXFLAGS += -pedantic-errors -Wall -Wsign-compare
+CXXFLAGS += -pedantic-errors -Wall -Wsign-compare -Weffc++
 
 LDFLAGS  := -L../battlecode/c/lib -lm -lc
 INCLUDE  := -isystem../battlecode/c/include -isystemexternal -Iinclude

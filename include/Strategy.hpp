@@ -15,6 +15,7 @@ using namespace std;
 
 class Strategy {
  public:
+  virtual ~Strategy() {}
   virtual bool run(GameState &game_state, unordered_set<unsigned> units) = 0;
 };
 
