@@ -52,10 +52,11 @@ int main() {
 
   WorkerRushStrategy worker_rush(point_distances);
   RocketLaunchingStrategy launch_rockets(game_state);
-  RocketBoardingStrategy board_rockets{};
   BuildingStrategy build_rockets(Rocket);
   BuildingStrategy build_factories(Factory);
   AttackStrategy ranger_attack(Ranger, ranger_attack_distances);
+  RocketBoardingStrategy board_rockets{};
+  UnboardingStrategy unboard{};
 
   int stop_s = clock();
   cout << "Analyzing map took "
@@ -89,6 +90,10 @@ int main() {
     if (game_state.round >= 75 && game_state.round % 15 == 1 &&
         game_state.PLANET == Earth) {
       command_queue.push({BuildRocket});
+    }
+
+    if (game_state.PLANET == Mars) {
+      unboard.run(game_state, game_state.my_units.by_type[Rocket]);
     }
 
     if (command_queue.empty()) {

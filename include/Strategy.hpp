@@ -430,6 +430,28 @@ class RocketBoardingStrategy : public RobotStrategy {
   }
 };
 
+class UnboardingStrategy : public Strategy {
+ public:
+  bool run(GameState &game_state, unordered_set<unsigned> structures) {
+    auto did_unboard = false;
+    for (const auto structure_id : structures) {
+      const auto structure_unit = game_state.gc.get_unit(structure_id);
+      const auto garrison = structure_unit.get_structure_garrison();
+      for (int j = 0; j < (int)garrison.size(); j++) {
+        MapLocation ml = structure_unit.get_map_location();
+        for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+          auto dir = Direction(i);
+          if (game_state.gc.can_unload(structure_id, dir)) {
+            game_state.unload(structure_id, dir);
+            did_unboard = true;
+          }
+        }
+      }
+    }
+    return did_unboard;
+  }
+};
+
 class RocketLaunchingStrategy : public Strategy {
  protected:
   const MapInfo mars_map_info;
