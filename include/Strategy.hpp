@@ -22,7 +22,7 @@ class RobotStrategy : public Strategy {
  protected:
   void move(GameState &game_state, unsigned unit_id, const MapLocation &goal,
             PairwiseDistances &pd) {
-    const auto &loc = game_state.my_units.by_id[unit_id].second;
+    const auto loc = game_state.my_units.by_id[unit_id].second;
     const auto dir = silly_pathfinding(game_state.gc, loc, goal, pd);
     if (game_state.gc.can_move(unit_id, dir) &&
         game_state.gc.is_move_ready(unit_id)) {
@@ -43,7 +43,7 @@ class RobotStrategy : public Strategy {
   }
 
   bool maybe_board_rocket(GameState &game_state, unsigned unit_id) {
-    const auto &loc = game_state.my_units.by_id[unit_id].second;
+    const auto loc = game_state.my_units.by_id[unit_id].second;
     const auto robot_x = loc.get_x();
     const auto robot_y = loc.get_y();
 
@@ -142,7 +142,7 @@ class WorkerStrategy : public RobotStrategy {
   }
 
   bool maybe_harvest(GameState &game_state, unsigned worker_id) {
-    const auto &loc = game_state.my_units.by_id[worker_id].second;
+    const auto loc = game_state.my_units.by_id[worker_id].second;
     const auto worker_x = loc.get_x();
     const auto worker_y = loc.get_y();
 
@@ -172,7 +172,7 @@ class WorkerStrategy : public RobotStrategy {
   }
 
   bool maybe_build_or_repair(GameState &game_state, unsigned worker_id) {
-    const auto &loc = game_state.my_units.by_id[worker_id].second;
+    const auto loc = game_state.my_units.by_id[worker_id].second;
     const auto worker_x = loc.get_x();
     const auto worker_y = loc.get_y();
 
@@ -225,7 +225,7 @@ class WorkerStrategy : public RobotStrategy {
 
   bool maybe_blueprint(GameState &game_state, unsigned worker_id,
                        UnitType unit_type) {
-    const auto &loc = game_state.my_units.by_id[worker_id].second;
+    const auto loc = game_state.my_units.by_id[worker_id].second;
     const auto worker_x = loc.get_x();
     const auto worker_y = loc.get_y();
 
