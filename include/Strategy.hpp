@@ -23,7 +23,7 @@ class RobotStrategy : public Strategy {
   void move(GameState &game_state, unsigned unit_id, const MapLocation &goal,
             PairwiseDistances &pd) {
     const auto loc = game_state.my_units.by_id[unit_id].second;
-    const auto dir = silly_pathfinding(game_state.gc, loc, goal, pd);
+    const auto dir = silly_pathfinding(game_state, loc, goal, pd);
     if (game_state.gc.can_move(unit_id, dir) &&
         game_state.gc.is_move_ready(unit_id)) {
       game_state.move(unit_id, dir);
@@ -76,7 +76,7 @@ class WorkerStrategy : public RobotStrategy {
                                 bool should_replicate) {
     auto loc = game_state.my_units.by_id[worker_id].second;
     if (should_move) {
-      const auto dir = silly_pathfinding(game_state.gc, loc, goal, pd);
+      const auto dir = silly_pathfinding(game_state, loc, goal, pd);
       if (game_state.gc.can_move(worker_id, dir) &&
           game_state.gc.is_move_ready(worker_id)) {
         game_state.move(worker_id, dir);
@@ -85,7 +85,7 @@ class WorkerStrategy : public RobotStrategy {
     }
 
     if (should_replicate) {
-      const auto dir = silly_pathfinding(game_state.gc, loc, goal, pd);
+      const auto dir = silly_pathfinding(game_state, loc, goal, pd);
       if (game_state.gc.can_replicate(worker_id, dir)) {
         const auto replicated_id = game_state.replicate(worker_id, dir);
         return maybe_move_and_replicate(game_state, replicated_id, goal, pd,
