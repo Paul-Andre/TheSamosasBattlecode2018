@@ -21,6 +21,7 @@ struct UnitList {
   unordered_map<unsigned, pair<UnitType, MapLocation>> by_id;
   vector<vector<unsigned>> by_location;
   vector<vector<bool>> is_occupied;
+  unordered_set<unsigned> all;
 
   unordered_map<unsigned, MapLocation> initial_workers;
 

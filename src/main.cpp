@@ -51,7 +51,7 @@ int main() {
       game_state.map_info.passable_terrain, constants::RANGER_KERNEL);
 
   WorkerRushStrategy worker_rush(point_distances);
-  RocketLaunchingStrategy rocket_launch(game_state);
+  RocketLaunchingStrategy launch_rockets(game_state);
   RocketBoardingStrategy board_rockets{};
   BuildingStrategy build_rockets(Rocket);
   BuildingStrategy build_factories(Factory);
@@ -85,7 +85,40 @@ int main() {
     printf("Round: %d. \n", game_state.round);
     printf("Karbonite: %d. \n", game_state.karbonite);
 
+    // Spam buildings.
+    if (game_state.round >= 75 && game_state.round % 15 == 1 &&
+        game_state.PLANET == Earth) {
+      command_queue.push({BuildRocket});
+    }
+
+    if (command_queue.empty()) {
+      worker_rush.set_should_replicate(true);
+    } else {
+      worker_rush.set_should_replicate(false);
+      const auto command = command_queue.back();
+
+      bool did_something = false;
+      switch (command.type) {
+        case BuildRocket:
+          did_something = build_rockets.run(
+              game_state, game_state.my_units.by_type[Worker]);
+          break;
+        case BuildFactory:
+          did_something = build_rockets.run(
+              game_state, game_state.my_units.by_type[Worker]);
+          break;
+        case ProduceUnit:
+          break;
+      }
+
+      if (did_something) {
+        command_queue.pop();
+      }
+    }
+
+    board_rockets.run(game_state, game_state.my_units.all);
     worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
+    launch_rockets.run(game_state, game_state.my_units.by_type[Rocket]);
 
     cout << "My unit count: " << game_state.my_units.by_id.size() << endl;
     cout << "Enemy unit count: " << game_state.enemy_units.by_id.size() << endl;

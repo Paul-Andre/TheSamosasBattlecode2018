@@ -15,7 +15,7 @@ using namespace std;
 
 class Strategy {
  public:
-  virtual void run(GameState &game_state, unordered_set<unsigned> units) = 0;
+  virtual bool run(GameState &game_state, unordered_set<unsigned> units) = 0;
 };
 
 class RobotStrategy : public Strategy {
@@ -338,7 +338,7 @@ class WorkerRushStrategy : public WorkerStrategy {
     return units_to_be_moved;
   }
 
-  void run(GameState &game_state, unordered_set<unsigned> workers) {
+  bool run(GameState &game_state, unordered_set<unsigned> workers) {
     vector<MapLocation> target_locations;
 
     unordered_map<uint16_t, unsigned> n_max_targetting;
@@ -352,8 +352,7 @@ class WorkerRushStrategy : public WorkerStrategy {
       if (game_state.map_info.can_sense[x][y]) {
         n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
                                  count_obstructions(game_state, x, y) + 1;
-      }
-      else {
+      } else {
         n_max_targetting[hash] = 10;
       }
     }
@@ -388,6 +387,8 @@ class WorkerRushStrategy : public WorkerStrategy {
     for (const auto id : units_to_be_moved_randomly) {
       maybe_move_and_replicate_randomly(game_state, id, should_replicate);
     }
+
+    return true;
   }
 };
 
@@ -398,19 +399,22 @@ class BuildingStrategy : public WorkerStrategy {
  public:
   BuildingStrategy(const UnitType &unit_type) : unit_type(unit_type) {}
 
-  void run(GameState &game_state, unordered_set<unsigned> workers) {
+  bool run(GameState &game_state, unordered_set<unsigned> workers) {
     for (const auto worker_id : workers) {
-      if (maybe_blueprint(game_state, worker_id, unit_type)) return;
+      if (maybe_blueprint(game_state, worker_id, unit_type)) return true;
     }
+    return false;
   }
 };
 
 class RocketBoardingStrategy : public RobotStrategy {
  public:
-  void run(GameState &game_state, unordered_set<unsigned> robots) {
+  bool run(GameState &game_state, unordered_set<unsigned> robots) {
+    auto did_board = false;
     for (const auto robot_id : robots) {
-      maybe_board_rocket(game_state, robot_id);
+      if (maybe_board_rocket(game_state, robot_id)) did_board = true;
     }
+    return did_board;
   }
 };
 
@@ -423,7 +427,8 @@ class RocketLaunchingStrategy : public Strategy {
   RocketLaunchingStrategy(GameState &game_state)
       : mars_map_info(game_state.gc.get_starting_planet(Mars)) {}
 
-  void run(GameState &game_state, unordered_set<unsigned> rockets) {
+  bool run(GameState &game_state, unordered_set<unsigned> rockets) {
+    auto did_launch = false;
     for (const auto rocket_id : rockets) {
       const auto rocket_unit = game_state.gc.get_unit(rocket_id);
 
@@ -435,7 +440,9 @@ class RocketLaunchingStrategy : public Strategy {
       if (!game_state.gc.can_launch_rocket(rocket_id, *ml)) continue;
 
       game_state.launch(rocket_id, *ml);
+      did_launch = true;
     }
+    return did_launch;
   }
 };
 
@@ -448,5 +455,7 @@ class AttackStrategy : public RobotStrategy {
   AttackStrategy(const UnitType &unit_type, const PairwiseDistances &distances)
       : unit_type(unit_type), distances(distances) {}
 
-  void run(GameState &game_state, unordered_set<unsigned> military_units) {}
+  bool run(GameState &game_state, unordered_set<unsigned> military_units) {
+    return false;
+  }
 };

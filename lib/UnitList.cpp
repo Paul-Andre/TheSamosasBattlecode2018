@@ -25,6 +25,7 @@ void UnitList::add(unsigned id, UnitType unit_type, MapLocation loc) {
   by_type[unit_type].insert(id);
   by_location[x][y] = id;
   is_occupied[x][y] = true;
+  all.insert(id);
 }
 
 void UnitList::remove(unsigned id) {
@@ -37,6 +38,7 @@ void UnitList::remove(unsigned id) {
   by_location[x][y] = -1;
   is_occupied[x][y] = false;
   by_type[unit_type].erase(id);
+  all.erase(id);
 }
 
 void UnitList::move(unsigned id, Direction dir) {
