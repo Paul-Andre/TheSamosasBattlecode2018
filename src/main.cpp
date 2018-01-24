@@ -43,7 +43,7 @@ int main() {
   GameState game_state(gc);
   MapInfo mars_map_info(gc.get_starting_planet(Mars));
 
-  int start_s = clock();
+  const auto start_s = clock();
 
   PairwiseDistances point_distances(game_state.map_info.passable_terrain,
                                     constants::POINT_KERNEL);
@@ -58,7 +58,7 @@ int main() {
   RocketBoardingStrategy board_rockets{};
   UnboardingStrategy unboard{};
 
-  int stop_s = clock();
+  const auto stop_s = clock();
   cout << "Analyzing map took "
        << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << " milliseconds"
        << endl;
@@ -82,7 +82,7 @@ int main() {
   while (true) {
     game_state.update();
 
-    int start_s = clock();
+    const auto start_s = clock();
     printf("Round: %d. \n", game_state.round);
     printf("Karbonite: %d. \n", game_state.karbonite);
 
@@ -128,7 +128,7 @@ int main() {
     cout << "My unit count: " << game_state.my_units.by_id.size() << endl;
     cout << "Enemy unit count: " << game_state.enemy_units.by_id.size() << endl;
 
-    int stop_s = clock();
+    const auto stop_s = clock();
     cout << "Round took " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
          << " milliseconds" << endl;
     cout << "Time left " << gc.get_time_left_ms() << endl;

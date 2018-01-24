@@ -91,7 +91,6 @@ void UnitList::update(GameController& gc) {
   }
 
   // Insert initial units that haven't been seen yet.
-  unordered_set<unsigned> to_erase;
   for (const auto& worker : initial_workers) {
     const auto id = worker.first;
     const auto loc = worker.second;

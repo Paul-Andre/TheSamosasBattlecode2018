@@ -306,7 +306,7 @@ class WorkerRushStrategy : public WorkerStrategy {
 
     random_shuffle(initial.begin(), initial.end());
 
-    for (int i = 0; i < initial.size(); i++) {
+    for (size_t i = 0; i < initial.size(); i++) {
       q.push(initial[i]);
     }
 
@@ -455,7 +455,7 @@ class UnboardingStrategy : public Strategy {
 class RocketLaunchingStrategy : public Strategy {
  protected:
   const MapInfo mars_map_info;
-  const int MIN_UNITS_TO_LAUNCH = 4;
+  const unsigned MIN_UNITS_TO_LAUNCH = 4;
 
  public:
   RocketLaunchingStrategy(GameState &game_state)
