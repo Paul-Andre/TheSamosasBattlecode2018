@@ -55,6 +55,7 @@ int main() {
   RocketBoardingStrategy board_rockets{};
   BuildingStrategy build_rockets(Rocket);
   BuildingStrategy build_factories(Factory);
+  AttackStrategy ranger_attack(Ranger, ranger_attack_distances);
 
   int stop_s = clock();
   cout << "Analyzing map took "

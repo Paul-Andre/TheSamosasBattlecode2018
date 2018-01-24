@@ -370,3 +370,15 @@ class RocketLaunchingStrategy : public Strategy {
     }
   }
 };
+
+class AttackStrategy : public RobotStrategy {
+ protected:
+  const UnitType &unit_type;
+  const PairwiseDistances &distances;
+
+ public:
+  AttackStrategy(const UnitType &unit_type, const PairwiseDistances &distances)
+      : unit_type(unit_type), distances(distances) {}
+
+  void run(GameState &game_state, unordered_set<unsigned> military_units) {}
+};
