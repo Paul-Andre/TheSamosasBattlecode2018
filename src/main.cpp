@@ -29,9 +29,7 @@ struct BuildCommand {
 int main() {
   printf("Player C++ bot starting\n");
 
-  // It's good to try and make matches deterministic. It's not required, but it
-  // makes debugging wayyy easier.
-  // Now if you use random() it will produce the same output each map.
+  // Make matches deterministic.
   srand(0);
 
   printf("Connecting to manager...\n");

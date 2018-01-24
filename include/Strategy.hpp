@@ -466,6 +466,9 @@ class RocketLaunchingStrategy : public Strategy {
   bool run(GameState &game_state, unordered_set<unsigned> rockets) {
     auto did_launch = false;
     for (const auto rocket_id : rockets) {
+      // A rocket launch could have destroyed a surrounding rocket.
+      if (!game_state.gc.has_unit(rocket_id)) continue;
+
       const auto rocket_unit = game_state.gc.get_unit(rocket_id);
 
       if (!rocket_unit.structure_is_built()) continue;

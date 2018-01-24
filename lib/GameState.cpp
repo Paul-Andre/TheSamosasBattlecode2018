@@ -99,10 +99,10 @@ void GameState::launch(unsigned rocket_id, const MapLocation &loc) {
 
     if (my_units.is_occupied[probe_x][probe_y]) {
       const auto unit_id = my_units.by_location[probe_x][probe_y];
-      my_units.remove(unit_id);
+      if (!gc.has_unit(unit_id)) my_units.remove(unit_id);
     } else if (enemy_units.is_occupied[probe_x][probe_y]) {
       const auto unit_id = enemy_units.by_location[probe_x][probe_y];
-      enemy_units.remove(unit_id);
+      if (!gc.has_unit(unit_id)) enemy_units.remove(unit_id);
     }
   }
 }
@@ -114,19 +114,13 @@ void GameState::disintegrate(unsigned id) {
 
 void GameState::attack(unsigned id, unsigned target_id) {
   gc.attack(id, target_id);
-
-  UnitList *unit_list;
-  if (enemy_units.by_id.count(target_id)) {
-    unit_list = &enemy_units;
-  } else {
-    // Attacked self...
-    unit_list = &my_units;
-  }
-
-  const auto target_loc = unit_list->by_id[target_id].second;
-  if (!gc.can_sense_location(target_loc) ||
-      !gc.has_unit_at_location(target_loc)) {
-    unit_list->remove(target_id);
+  if (!gc.has_unit(target_id)) {
+    if (enemy_units.by_id.count(target_id)) {
+      enemy_units.remove(target_id);
+    } else {
+      // Attacked self...
+      my_units.remove(target_id);
+    }
   }
 }
 
