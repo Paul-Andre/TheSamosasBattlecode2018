@@ -348,8 +348,13 @@ class WorkerRushStrategy : public WorkerStrategy {
       const auto x = loc.get_x();
       const auto y = loc.get_y();
       const uint16_t hash = (x << 8) + y;
-      n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
-                               count_obstructions(game_state, x, y);
+      if (game_state.map_info.can_sense[x][y]) {
+        n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
+                                 count_obstructions(game_state, x, y) + 1;
+      }
+      else {
+        n_max_targetting[hash] = 10;
+      }
     }
 
     const auto targets =
