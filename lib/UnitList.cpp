@@ -62,6 +62,7 @@ void UnitList::move(unsigned id, Direction dir) {
 }
 
 void UnitList::update(GameController& gc) {
+  all.clear();
   by_id.clear();
 
   for (int i = 0; i < constants::N_UNIT_TYPES; i++) {
