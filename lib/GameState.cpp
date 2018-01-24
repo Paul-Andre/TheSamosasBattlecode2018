@@ -124,6 +124,7 @@ void GameState::attack(unsigned id, unsigned target_id) {
 }
 
 void GameState::harvest(unsigned id, Direction dir) {
+  gc.harvest(id, dir);
   const auto loc = my_units.by_id[id].second.add(dir);
   const auto x = loc.get_x();
   const auto y = loc.get_y();
