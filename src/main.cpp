@@ -137,8 +137,8 @@ int main() {
 
     const auto stop_s = clock();
     cout << "Round took " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000
-         << " milliseconds" << endl;
-    cout << "Time left " << gc.get_time_left_ms() << endl;
+         << " ms" << endl;
+    cout << "Time left " << gc.get_time_left_ms() << " ms" << endl;
     cout << "==========" << endl;
 
     fflush(stdout);
