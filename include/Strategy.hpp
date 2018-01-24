@@ -343,7 +343,11 @@ class BuildingStrategy : public WorkerStrategy {
 
 class RocketBoardingStrategy : public RobotStrategy {
  public:
-  void run(GameState &game_state, unordered_set<unsigned> robots) {}
+  void run(GameState &game_state, unordered_set<unsigned> robots) {
+    for (const auto robot_id : robots) {
+      maybe_board_rocket(robot_id);
+    }
+  }
 };
 
 class RocketLaunchingStrategy : public Strategy {
