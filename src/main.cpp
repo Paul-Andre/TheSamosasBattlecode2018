@@ -77,6 +77,7 @@ int main() {
   }
 
   queue<BuildCommand> command_queue;
+  bool rush_complete = false;
 
   // loop through the whole game.
   while (true) {
@@ -87,7 +88,7 @@ int main() {
     printf("Karbonite: %d. \n", game_state.karbonite);
 
     // Spam buildings.
-    if (game_state.round >= 75 && game_state.round % 15 == 1 &&
+    if (rush_complete && game_state.round % 25 == 1 &&
         game_state.PLANET == Earth) {
       command_queue.push({BuildRocket});
     }
@@ -122,7 +123,14 @@ int main() {
     }
 
     board_rockets.run(game_state, game_state.my_units.all);
-    worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
+
+    auto rush_successful =
+        worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
+    if (rush_successful && !rush_complete) {
+      command_queue.push({BuildRocket});
+      rush_complete = true;
+    }
+
     launch_rockets.run(game_state, game_state.my_units.by_type[Rocket]);
 
     cout << "My unit count: " << game_state.my_units.by_id.size() << endl;
