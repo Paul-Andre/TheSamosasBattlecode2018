@@ -1,9 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <limits>
 #include <unordered_set>
 #include <vector>
-#include <algorithm>
 
 #include "GameState.hpp"
 #include "PairwiseDistances.hpp"
@@ -43,8 +43,9 @@ vector<Target> find_targets(GameState &game_state,
   }
 
   // Sort by distance.
-  sort(targets.begin(), targets.end(),
-       [](const auto &a, const auto &b) { return !(a.distance >= b.distance); });
+  sort(targets.begin(), targets.end(), [](const auto &a, const auto &b) {
+    return !(a.distance >= b.distance);
+  });
 
   return targets;
 }

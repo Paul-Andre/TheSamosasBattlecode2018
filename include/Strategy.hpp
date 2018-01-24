@@ -393,12 +393,12 @@ class WorkerRushStrategy : public WorkerStrategy {
     for (int i = 0; i < game_state.map_info.width; i++) {
       for (int j = 0; j < game_state.map_info.height; j++) {
         MapLocation loc = MapLocation(game_state.map_info.planet, i, j);
-        if (game_state.enemy_units.is_occupied[i][j] && !game_state.is_surrounded(loc)) {
+        if (game_state.enemy_units.is_occupied[i][j] &&
+            !game_state.is_surrounded(loc)) {
           all_surrounded = false;
         }
       }
     }
-
 
     return all_surrounded;
   }
