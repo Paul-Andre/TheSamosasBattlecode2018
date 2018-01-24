@@ -78,6 +78,7 @@ int main() {
 
   queue<BuildCommand> command_queue;
   bool rush_complete = false;
+  unsigned round_rush_complete = numeric_limits<unsigned>::max();
 
   // loop through the whole game.
   while (true) {
@@ -88,7 +89,7 @@ int main() {
     printf("Karbonite: %d. \n", game_state.karbonite);
 
     // Spam buildings.
-    if (rush_complete && game_state.round % 25 == 1 &&
+    if ((game_state.round - round_rush_complete) % 50 == 49 &&
         game_state.PLANET == Earth) {
       command_queue.push({BuildRocket});
     }
@@ -127,8 +128,8 @@ int main() {
     auto rush_successful =
         worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
     if (rush_successful && !rush_complete) {
-      command_queue.push({BuildRocket});
       rush_complete = true;
+      round_rush_complete = game_state.round;
     }
 
     launch_rockets.run(game_state, game_state.my_units.by_type[Rocket]);
