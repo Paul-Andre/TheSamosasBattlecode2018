@@ -85,13 +85,48 @@ void GameState::launch(unsigned rocket_id, const MapLocation &loc) {
   gc.launch_rocket(rocket_id, loc);
   my_units.remove(rocket_id);
 
-  // TODO: Update units around the rocket if they were destroyed.
+  // Update units around the rocket if they were destroyed.
+  const auto x = loc.get_x();
+  const auto y = loc.get_y();
+  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+    const auto probe_x = x + constants::DX[i];
+    const auto probe_y = y + constants::DY[i];
+    const auto probe_loc = map_info.location[probe_x][probe_y];
+
+    if (gc.can_sense_location(*probe_loc) &&
+        gc.has_unit_at_location(*probe_loc))
+      continue;
+
+    if (my_units.is_occupied[probe_x][probe_y]) {
+      const auto unit_id = my_units.by_location[probe_x][probe_y];
+      my_units.remove(unit_id);
+    } else if (enemy_units.is_occupied[probe_x][probe_y]) {
+      const auto unit_id = enemy_units.by_location[probe_x][probe_y];
+      enemy_units.remove(unit_id);
+    }
+  }
+}
+
+void GameState::disintegrate(unsigned id) {
+  gc.disintegrate_unit(id);
+  my_units.remove(id);
 }
 
 void GameState::attack(unsigned id, unsigned target_id) {
   gc.attack(id, target_id);
-  if (gc.get_unit(target_id).get_health() == 0) {
-    enemy_units.remove(target_id);
+
+  UnitList *unit_list;
+  if (enemy_units.by_id.count(target_id)) {
+    unit_list = &enemy_units;
+  } else {
+    // Attacked self...
+    unit_list = &my_units;
+  }
+
+  const auto target_loc = unit_list->by_id[target_id].second;
+  if (!gc.can_sense_location(target_loc) ||
+      !gc.has_unit_at_location(target_loc)) {
+    unit_list->remove(target_id);
   }
 }
 

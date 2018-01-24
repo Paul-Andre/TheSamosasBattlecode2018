@@ -40,6 +40,7 @@ struct GameState {
   unsigned unload(unsigned structure_id, Direction dir);
   void launch(unsigned rocket_id, const MapLocation& loc);
   void attack(unsigned id, unsigned target_id);
+  void disintegrate(unsigned id);
 
   void harvest(unsigned id, Direction dir);
   unsigned replicate(unsigned id, Direction dir);
