@@ -406,7 +406,7 @@ class WorkerRushStrategy : public WorkerStrategy {
 
 class BuildingStrategy : public WorkerStrategy {
  protected:
-  const UnitType &unit_type;
+  const UnitType unit_type;
 
  public:
   BuildingStrategy(const UnitType &unit_type) : unit_type(unit_type) {}
