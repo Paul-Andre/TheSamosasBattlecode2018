@@ -12,7 +12,6 @@ struct MapInfo {
   const Planet planet;
 
   // Convention: [x][y].
-  vector<vector<MapLocation *>> location;
   vector<vector<unsigned>> karbonite;
   vector<vector<bool>> passable_terrain;
   vector<vector<bool>> can_sense;
@@ -21,7 +20,11 @@ struct MapInfo {
 
   void update(const GameController &gc);
 
-  MapLocation *get_random_passable_location() const;
+  inline MapLocation get_location(int x, int y) const {
+    return MapLocation(planet, x, y);
+  }
+
+  MapLocation get_random_passable_location() const;
 
   inline bool is_valid_location(int x, int y) const {
     return x >= 0 && x < width && y >= 0 && y < height;

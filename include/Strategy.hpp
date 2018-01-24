@@ -104,8 +104,8 @@ class WorkerStrategy : public RobotStrategy {
       }
     }
 
-    maybe_harvest(game_state, worker_id);
-    maybe_build_or_repair(game_state, worker_id);
+    if (maybe_build_or_repair(game_state, worker_id)) return;
+    if (maybe_harvest(game_state, worker_id)) return;
   }
 
   void maybe_move_and_replicate_randomly(GameState &game_state,
@@ -137,8 +137,8 @@ class WorkerStrategy : public RobotStrategy {
       }
     }
 
-    maybe_harvest(game_state, worker_id);
-    maybe_build_or_repair(game_state, worker_id);
+    if (maybe_build_or_repair(game_state, worker_id)) return;
+    if (maybe_harvest(game_state, worker_id)) return;
   }
 
   bool maybe_harvest(GameState &game_state, unsigned worker_id) {
@@ -147,15 +147,17 @@ class WorkerStrategy : public RobotStrategy {
     const auto worker_y = loc.get_y();
 
     auto best_dir = Center;
+    auto can_harvest = false;
     unsigned max_karbonite = 0;
     for (int i = 0; i < constants::N_DIRECTIONS; i++) {
       const auto dir = (Direction)i;
-      const auto harvest_x = worker_x + constants::DX[i];
-      const auto harvest_y = worker_y + constants::DY[i];
+      const auto probe_x = worker_x + constants::DX[i];
+      const auto probe_y = worker_y + constants::DY[i];
+      if (!game_state.map_info.is_valid_location(probe_x, probe_y)) continue;
 
       if (game_state.gc.can_harvest(worker_id, dir)) {
-        const auto karbonite =
-            game_state.map_info.karbonite[harvest_x][harvest_y];
+        can_harvest = true;
+        const auto karbonite = game_state.map_info.karbonite[probe_x][probe_y];
         if (karbonite > max_karbonite) {
           max_karbonite = karbonite;
           best_dir = dir;
@@ -163,7 +165,7 @@ class WorkerStrategy : public RobotStrategy {
       }
     }
 
-    if (game_state.gc.can_harvest(worker_id, best_dir)) {
+    if (can_harvest) {
       game_state.harvest(worker_id, best_dir);
       return true;
     }
@@ -178,12 +180,12 @@ class WorkerStrategy : public RobotStrategy {
 
     // Try build.
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-      const auto build_x = worker_x + constants::DX[i];
-      const auto build_y = worker_y + constants::DY[i];
+      const auto probe_x = worker_x + constants::DX[i];
+      const auto probe_y = worker_y + constants::DY[i];
 
-      if (!game_state.map_info.is_valid_location(build_x, build_y)) continue;
-      if (!game_state.my_units.is_occupied[build_x][build_y]) continue;
-      const auto unit_id = game_state.my_units.by_location[build_x][build_y];
+      if (!game_state.map_info.is_valid_location(probe_x, probe_y)) continue;
+      if (!game_state.my_units.is_occupied[probe_x][probe_y]) continue;
+      const auto unit_id = game_state.my_units.by_location[probe_x][probe_y];
       const auto unit_type = game_state.my_units.by_id[unit_id].first;
 
       if (unit_type != Factory && unit_type != Rocket) continue;
@@ -199,12 +201,12 @@ class WorkerStrategy : public RobotStrategy {
 
     // Try repair.
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-      const auto build_x = worker_x + constants::DX[i];
-      const auto build_y = worker_y + constants::DY[i];
+      const auto probe_x = worker_x + constants::DX[i];
+      const auto probe_y = worker_y + constants::DY[i];
 
-      if (!game_state.map_info.is_valid_location(build_x, build_y)) continue;
-      if (!game_state.my_units.is_occupied[build_x][build_y]) continue;
-      const auto unit_id = game_state.my_units.by_location[build_x][build_y];
+      if (!game_state.map_info.is_valid_location(probe_x, probe_y)) continue;
+      if (!game_state.my_units.is_occupied[probe_x][probe_y]) continue;
+      const auto unit_id = game_state.my_units.by_location[probe_x][probe_y];
       const auto unit_type = game_state.my_units.by_id[unit_id].first;
 
       if (unit_type != Factory && unit_type != Rocket) continue;
@@ -375,14 +377,13 @@ class WorkerRushStrategy : public WorkerStrategy {
       if (n_targetting[hash] >= n_max_targetting[hash]) continue;
       if (targetting.count(target.id)) continue;
 
-      const auto loc = game_state.map_info.location[target.x][target.y];
-      if (game_state.is_surrounded(*loc) && target.distance > 1) continue;
+      const auto goal = game_state.map_info.get_location(target.x, target.y);
+      if (game_state.is_surrounded(goal) && target.distance > 1) continue;
 
       n_targetting[hash]++;
       targetting.insert(target.id);
 
-      const auto goal = game_state.map_info.location[target.x][target.y];
-      maybe_move_and_replicate(game_state, target.id, *goal, distances, true,
+      maybe_move_and_replicate(game_state, target.id, goal, distances, true,
                                should_replicate);
     }
 
@@ -476,9 +477,9 @@ class RocketLaunchingStrategy : public Strategy {
         continue;
 
       const auto ml = mars_map_info.get_random_passable_location();
-      if (!game_state.gc.can_launch_rocket(rocket_id, *ml)) continue;
+      if (!game_state.gc.can_launch_rocket(rocket_id, ml)) continue;
 
-      game_state.launch(rocket_id, *ml);
+      game_state.launch(rocket_id, ml);
       did_launch = true;
     }
     return did_launch;

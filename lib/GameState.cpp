@@ -31,7 +31,7 @@ bool GameState::is_surrounded(const MapLocation &loc) const {
 
     if (!map_info.passable_terrain[x][y]) continue;
 
-    if (!has_unit_at(*map_info.location[x][y])) return false;
+    if (!has_unit_at(map_info.get_location(x, y))) return false;
   }
 
   return true;
@@ -91,10 +91,9 @@ void GameState::launch(unsigned rocket_id, const MapLocation &loc) {
   for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
     const auto probe_x = x + constants::DX[i];
     const auto probe_y = y + constants::DY[i];
-    const auto probe_loc = map_info.location[probe_x][probe_y];
+    const auto probe_loc = map_info.get_location(probe_x, probe_y);
 
-    if (gc.can_sense_location(*probe_loc) &&
-        gc.has_unit_at_location(*probe_loc))
+    if (gc.can_sense_location(probe_loc) && gc.has_unit_at_location(probe_loc))
       continue;
 
     if (my_units.is_occupied[probe_x][probe_y]) {
