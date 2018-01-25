@@ -71,6 +71,12 @@ class RobotStrategy : public Strategy {
 
 class WorkerStrategy : public RobotStrategy {
  protected:
+  bool should_replicate = true;
+
+ public:
+  void set_should_replicate(bool status) { should_replicate = status; }
+
+ protected:
   void maybe_move_and_replicate(GameState &game_state, unsigned worker_id,
                                 const MapLocation &goal,
                                 const PairwiseDistances &pd, bool should_move,
@@ -254,67 +260,10 @@ class WorkerStrategy : public RobotStrategy {
 class WorkerRushStrategy : public WorkerStrategy {
  protected:
   const PairwiseDistances distances;
-  bool should_replicate = true;
 
  public:
   WorkerRushStrategy(const PairwiseDistances &distances)
       : distances(distances) {}
-
-  void set_should_replicate(bool status) { should_replicate = status; }
-
-  vector<unsigned> random_move_order(GameState &game_state,
-                                     unordered_set<unsigned> unmovable) {
-    vector<vector<bool>> visited(
-        game_state.map_info.width,
-        vector<bool>(game_state.map_info.height, false));
-    queue<pair<int, int>> q;
-    vector<unsigned> units_to_be_moved;
-
-    vector<pair<int, int>> initial;
-
-    for (int i = 0; i < game_state.map_info.width; i++) {
-      for (int j = 0; j < game_state.map_info.height; j++) {
-        if (!game_state.has_unit_at(i, j) &&
-            game_state.map_info.passable_terrain[i][j]) {
-          visited[i][j] = true;
-          initial.push_back(make_pair(i, j));
-        }
-      }
-    }
-
-    random_shuffle(initial.begin(), initial.end());
-
-    for (size_t i = 0; i < initial.size(); i++) {
-      q.push(initial[i]);
-    }
-
-    while (!q.empty()) {
-      pair<int, int> current = q.front();
-      q.pop();
-
-      int ii = current.first;
-      int jj = current.second;
-
-      for (int k = 0; k < constants::N_DIRECTIONS_WITHOUT_CENTER; k++) {
-        int x = ii + constants::DX[k];
-        int y = jj + constants::DY[k];
-
-        if (x >= 0 && x < game_state.map_info.width && y >= 0 &&
-            y < game_state.map_info.width && !visited[x][y] &&
-            game_state.my_units.is_occupied[x][y]) {
-          auto id = game_state.my_units.by_location[x][y];
-          if (unmovable.count(id) != 0) continue;
-
-          if (!game_state.gc.is_move_ready(id)) continue;
-
-          units_to_be_moved.push_back(id);
-          q.push(make_pair(x, y));
-          visited[x][y] = true;
-        }
-      }
-    }
-    return units_to_be_moved;
-  }
 
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
     vector<MapLocation> target_locations;
@@ -378,6 +327,61 @@ class WorkerRushStrategy : public WorkerStrategy {
       }
     }
     return true;
+  }
+
+ protected:
+  vector<unsigned> random_move_order(GameState &game_state,
+                                     unordered_set<unsigned> unmovable) {
+    vector<vector<bool>> visited(
+        game_state.map_info.width,
+        vector<bool>(game_state.map_info.height, false));
+    queue<pair<int, int>> q;
+    vector<unsigned> units_to_be_moved;
+
+    vector<pair<int, int>> initial;
+
+    for (int i = 0; i < game_state.map_info.width; i++) {
+      for (int j = 0; j < game_state.map_info.height; j++) {
+        if (!game_state.has_unit_at(i, j) &&
+            game_state.map_info.passable_terrain[i][j]) {
+          visited[i][j] = true;
+          initial.push_back(make_pair(i, j));
+        }
+      }
+    }
+
+    random_shuffle(initial.begin(), initial.end());
+
+    for (size_t i = 0; i < initial.size(); i++) {
+      q.push(initial[i]);
+    }
+
+    while (!q.empty()) {
+      pair<int, int> current = q.front();
+      q.pop();
+
+      int ii = current.first;
+      int jj = current.second;
+
+      for (int k = 0; k < constants::N_DIRECTIONS_WITHOUT_CENTER; k++) {
+        int x = ii + constants::DX[k];
+        int y = jj + constants::DY[k];
+
+        if (x >= 0 && x < game_state.map_info.width && y >= 0 &&
+            y < game_state.map_info.width && !visited[x][y] &&
+            game_state.my_units.is_occupied[x][y]) {
+          auto id = game_state.my_units.by_location[x][y];
+          if (unmovable.count(id) != 0) continue;
+
+          if (!game_state.gc.is_move_ready(id)) continue;
+
+          units_to_be_moved.push_back(id);
+          q.push(make_pair(x, y));
+          visited[x][y] = true;
+        }
+      }
+    }
+    return units_to_be_moved;
   }
 };
 
