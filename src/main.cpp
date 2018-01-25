@@ -16,12 +16,8 @@
 using namespace std;
 using namespace bc;
 
-struct BuildCommand {
-  UnitType unit_type;
-};
-
 int main() {
-  printf("Player C++ bot starting\n");
+  printf("Bot starting...\n");
 
   // Make matches deterministic.
   srand(0);
@@ -33,7 +29,6 @@ int main() {
   printf("Connected!\n");
 
   GameState game_state(gc);
-  MapInfo mars_map_info(gc.get_starting_planet(Mars));
 
   const auto start_s = clock();
 
@@ -46,11 +41,11 @@ int main() {
   PairwiseDistances mage_or_healer_distances(
       game_state.map_info.passable_terrain, constants::KERNEL[Mage]);
 
+  // Strategies.
   WorkerRushStrategy worker_rush(point_distances);
   RocketLaunchingStrategy launch_rockets(game_state);
   RocketBoardingStrategy board_rockets{};
   UnboardingStrategy unboard{};
-
   array<Strategy*, constants::N_UNIT_TYPES> build = {{
       new UnitProductionStrategy(Worker),
       new UnitProductionStrategy(Knight),
@@ -60,7 +55,6 @@ int main() {
       new BuildingStrategy(Factory),
       new BuildingStrategy(Rocket),
   }};
-
   array<Strategy*, constants::N_ROBOT_TYPES> attack = {{
       new NullStrategy(),  // Workers cannot attack.
       new AttackStrategy(Knight, point_distances),
@@ -75,7 +69,7 @@ int main() {
        << endl;
 
   // First thing get some research going
-  if (gc.get_planet() == Earth) {
+  if (game_state.PLANET == Earth) {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker
     gc.queue_research(UnitType::Ranger);  // Faster ranger
     gc.queue_research(UnitType::Worker);  // Increase build speed
@@ -86,9 +80,8 @@ int main() {
     gc.queue_research(UnitType::Ranger);  // Snipe
   }
 
-  queue<BuildCommand> command_queue;
+  queue<UnitType> build_queue;
 
-  // loop through the whole game.
   while (true) {
     game_state.update();
 
@@ -101,47 +94,47 @@ int main() {
       case Earth:
         if (game_state.round % 10 == 0 &&
             game_state.my_units.by_type[Factory].size() < 3) {
-          command_queue.push({Factory});
+          build_queue.push({Factory});
         }
 
         if (game_state.round > 400 && game_state.round % 20 == 0) {
-          command_queue.push({Rocket});
+          build_queue.push({Rocket});
         }
 
         if (game_state.my_units.by_type[Factory].size()) {
           if (game_state.my_units.by_type[Worker].size() < 8) {
-            command_queue.push({Worker});
+            build_queue.push({Worker});
           } else {
-            command_queue.push({Ranger});
+            build_queue.push({Ranger});
           }
         }
 
-        if (command_queue.empty()) {
+        if (build_queue.empty()) {
           worker_rush.set_should_replicate(true);
         } else {
           worker_rush.set_should_replicate(false);
           worker_rush.set_should_move_to_enemy(false);
-          const auto command = command_queue.back();
+          const auto unit_type = build_queue.back();
 
           bool did_something = false;
-          switch (command.unit_type) {
+          switch (unit_type) {
             case Worker:
             case Knight:
             case Ranger:
             case Mage:
             case Healer:
-              did_something = build[command.unit_type]->run(
+              did_something = build[unit_type]->run(
                   game_state, game_state.my_units.by_type[Factory]);
               break;
             case Rocket:
             case Factory:
-              did_something = build[command.unit_type]->run(
+              did_something = build[unit_type]->run(
                   game_state, game_state.my_units.by_type[Worker]);
               break;
           }
 
           if (did_something) {
-            command_queue.pop();
+            build_queue.pop();
           }
         }
 
