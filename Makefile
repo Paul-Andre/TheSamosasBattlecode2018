@@ -25,7 +25,7 @@ endif
 all: CXXFLAGS += -O2
 all: build $(BUILD)/$(TARGET)
 
-debug: CXXFLAGS += -DBACKTRACE -DNDEBUG -g
+debug: CXXFLAGS += -DBACKTRACE -DNDEBUG -DDEBUG -g
 debug: build $(BUILD)/$(TARGET)
 
 -include $(BUILD)/Makefile.dep

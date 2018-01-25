@@ -17,16 +17,22 @@ using namespace std;
 using namespace bc;
 
 int main() {
-  printf("Bot starting...\n");
+  cout << "Bot starting..." << endl;
 
-  // Make matches deterministic.
-  srand(0);
+#ifdef DEBUG
+  // Make matches deterministic when debugging.
+  const auto seed = 0;
+#else
+  const auto seed = time(NULL);
+#endif
 
-  printf("Connecting to manager...\n");
+  srand(seed);
+  cout << "Random seed: " << seed << endl;
 
+  cout << "Connecting to manager..." << endl;
   GameController gc;
-
-  printf("Connected!\n");
+  cout << "Connected!" << endl;
+  fflush(stdout);
 
   GameState game_state(gc);
 
@@ -86,8 +92,8 @@ int main() {
     game_state.update();
 
     const auto start_s = clock();
-    printf("Round: %d. \n", game_state.round);
-    printf("Karbonite: %d. \n", game_state.karbonite);
+    cout << "Round: " << game_state.round << endl;
+    cout << "Karbonite: " << game_state.karbonite << endl;
 
     // Spam buildings.
     switch (game_state.PLANET) {
