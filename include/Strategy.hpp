@@ -19,13 +19,30 @@ class Strategy {
   virtual bool run(GameState &game_state, unordered_set<unsigned> units) = 0;
 };
 
+class NullStrategy : public Strategy {
+ public:
+  bool run(GameState &game_state, unordered_set<unsigned> units) {
+    return true;
+  }
+};
+
 class RobotStrategy : public Strategy {
  protected:
+  bool should_move_to_enemy = true;
   bool should_move_to_rockets = true;
+  bool should_move_to_factories = false;
 
  public:
+  void set_should_move_to_enemy(bool status) {
+    should_move_to_rockets = status;
+  }
+
   void set_should_move_to_rockets(bool status) {
     should_move_to_rockets = status;
+  }
+
+  void set_should_move_to_factories(bool status) {
+    should_move_to_factories = status;
   }
 
  protected:
@@ -80,6 +97,7 @@ class RobotStrategy : public Strategy {
 class WorkerStrategy : public RobotStrategy {
  protected:
   bool should_replicate = true;
+  bool should_move_to_enemy = false;
   bool should_move_to_unbuilt_factories = true;
 
  public:
@@ -273,6 +291,7 @@ class WorkerStrategy : public RobotStrategy {
 
 class WorkerRushStrategy : public WorkerStrategy {
  protected:
+  bool should_move_to_enemy = true;
   const PairwiseDistances distances;
 
  public:
@@ -282,9 +301,11 @@ class WorkerRushStrategy : public WorkerStrategy {
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
     vector<MapLocation> target_locations;
 
-    for (const auto &unit : game_state.enemy_units.by_id) {
-      const auto loc = unit.second.second;
-      target_locations.push_back(loc);
+    if (should_move_to_enemy) {
+      for (const auto &unit : game_state.enemy_units.by_id) {
+        const auto loc = unit.second.second;
+        target_locations.push_back(loc);
+      }
     }
 
     if (should_move_to_rockets) {
@@ -294,10 +315,12 @@ class WorkerRushStrategy : public WorkerStrategy {
       }
     }
 
-    if (should_move_to_unbuilt_factories) {
+    if (should_move_to_unbuilt_factories || should_move_to_factories) {
       for (const auto factory_id : game_state.my_units.by_type[Factory]) {
-        const auto factory_unit = game_state.gc.get_unit(factory_id);
-        if (factory_unit.structure_is_built()) continue;
+        if (!should_move_to_factories) {
+          const auto factory_unit = game_state.gc.get_unit(factory_id);
+          if (factory_unit.structure_is_built()) continue;
+        }
 
         const auto loc = game_state.my_units.by_id[factory_id].second;
         target_locations.push_back(loc);
@@ -527,7 +550,7 @@ class AttackStrategy : public RobotStrategy {
   const PairwiseDistances &distances;
 
  public:
-  AttackStrategy(const UnitType &unit_type, const PairwiseDistances &distances)
+  AttackStrategy(const UnitType unit_type, const PairwiseDistances &distances)
       : unit_type(unit_type),
         attack_range(constants::ATTACK_RANGE[unit_type]),
         distances(distances) {}
@@ -535,21 +558,9 @@ class AttackStrategy : public RobotStrategy {
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
     vector<MapLocation> target_locations;
 
-    unordered_map<uint16_t, unsigned> n_max_targetting;
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
       target_locations.push_back(loc);
-
-      const auto x = loc.get_x();
-      const auto y = loc.get_y();
-      const uint16_t hash = (x << 8) + y;
-      if (game_state.map_info.can_sense[x][y]) {
-        // Make this depend on the unit type.
-        n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
-                                 game_state.count_obstructions(x, y) + 1;
-      } else {
-        n_max_targetting[hash] = 4;
-      }
     }
 
     const auto targets =
@@ -563,7 +574,7 @@ class AttackStrategy : public RobotStrategy {
       if (target.distance == numeric_limits<uint16_t>::max()) continue;
 
       const uint16_t hash = (target.x << 8) + target.y;
-      if (n_targetting[hash] >= n_max_targetting[hash]) continue;
+      if (n_targetting[hash] >= 10) continue;
       if (targetting.count(target.id)) continue;
 
       const auto goal = game_state.map_info.get_location(target.x, target.y);
@@ -574,13 +585,18 @@ class AttackStrategy : public RobotStrategy {
       maybe_move(game_state, target.id, goal, distances);
     }
 
+    // Attack nearby targets.
     for (const auto militant_id : military_units) {
+      if (!targetting.count(militant_id)) {
+        maybe_move_randomly(game_state, militant_id);
+      }
+
       const auto loc = game_state.my_units.by_id[militant_id].second;
       auto enemies_within_range = game_state.gc.sense_nearby_units_by_team(
           loc, attack_range, game_state.ENEMY_TEAM);
 
       sort(enemies_within_range.begin(), enemies_within_range.end(),
-           [](const Unit &a, const Unit &b) {
+           [](const auto &a, const auto &b) {
              return a.get_health() < b.get_health();
            });
 
@@ -597,7 +613,7 @@ class AttackStrategy : public RobotStrategy {
   }
 };
 
-class UnitProductionStrategy : Strategy {
+class UnitProductionStrategy : public Strategy {
  protected:
   const UnitType unit_type;
 

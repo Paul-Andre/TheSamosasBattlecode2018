@@ -23,6 +23,7 @@ constexpr static int N_ROUNDS = 1000;
 
 // Units.
 constexpr static int N_UNIT_TYPES = 8;
+constexpr static int N_ROBOT_TYPES = 5;
 const static unordered_set<unsigned> ROBOT_TYPES = {Worker, Knight, Ranger,
                                                     Mage, Healer};
 const static unordered_set<unsigned> STRUCTURE_TYPES = {Factory, Rocket};

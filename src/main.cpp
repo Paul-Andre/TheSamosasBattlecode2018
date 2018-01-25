@@ -16,14 +16,8 @@
 using namespace std;
 using namespace bc;
 
-enum BuildCommandType {
-  BuildRocket,
-  BuildFactory,
-  ProduceUnit,
-};
-
 struct BuildCommand {
-  BuildCommandType type;
+  UnitType unit_type;
 };
 
 int main() {
@@ -48,13 +42,32 @@ int main() {
   PairwiseDistances ranger_attack_distances(
       game_state.map_info.passable_terrain, constants::KERNEL[Ranger]);
 
+  // XXX: this is only ok because they have the same specs.
+  PairwiseDistances mage_or_healer_distances(
+      game_state.map_info.passable_terrain, constants::KERNEL[Mage]);
+
   WorkerRushStrategy worker_rush(point_distances);
   RocketLaunchingStrategy launch_rockets(game_state);
-  BuildingStrategy build_rockets(Rocket);
-  BuildingStrategy build_factories(Factory);
-  AttackStrategy ranger_attack(Ranger, ranger_attack_distances);
   RocketBoardingStrategy board_rockets{};
   UnboardingStrategy unboard{};
+
+  array<Strategy*, constants::N_UNIT_TYPES> build = {{
+      new UnitProductionStrategy(Worker),
+      new UnitProductionStrategy(Knight),
+      new UnitProductionStrategy(Ranger),
+      new UnitProductionStrategy(Mage),
+      new UnitProductionStrategy(Healer),
+      new BuildingStrategy(Factory),
+      new BuildingStrategy(Rocket),
+  }};
+
+  array<Strategy*, constants::N_ROBOT_TYPES> attack = {{
+      new NullStrategy(),  // Workers cannot attack.
+      new AttackStrategy(Knight, point_distances),
+      new AttackStrategy(Ranger, ranger_attack_distances),
+      new AttackStrategy(Mage, mage_or_healer_distances),
+      new AttackStrategy(Healer, mage_or_healer_distances),
+  }};
 
   const auto stop_s = clock();
   cout << "Analyzing map took "
@@ -66,17 +79,14 @@ int main() {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker
     gc.queue_research(UnitType::Ranger);  // Faster ranger
     gc.queue_research(UnitType::Worker);  // Increase build speed
+    gc.queue_research(UnitType::Worker);  // Increase build speed
+    gc.queue_research(UnitType::Worker);  // Increase build speed
     gc.queue_research(UnitType::Rocket);  // To Mars
-
-    gc.queue_research(UnitType::Worker);  // Increase build speed
-    gc.queue_research(UnitType::Worker);  // Increase build speed
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision
     gc.queue_research(UnitType::Ranger);  // Snipe
   }
 
   queue<BuildCommand> command_queue;
-  bool rush_complete = false;
-  unsigned round_rush_complete = numeric_limits<unsigned>::max();
 
   // loop through the whole game.
   while (true) {
@@ -89,29 +99,44 @@ int main() {
     // Spam buildings.
     switch (game_state.PLANET) {
       case Earth:
-        if (rush_complete &&
-            (game_state.round - round_rush_complete) % 50 == 49 &&
-            game_state.PLANET == Earth) {
-          command_queue.push({BuildRocket});
+        if (game_state.round % 10 == 0 &&
+            game_state.my_units.by_type[Factory].size() < 3) {
+          command_queue.push({Factory});
+        }
+
+        if (game_state.round > 400 && game_state.round % 20 == 0) {
+          command_queue.push({Rocket});
+        }
+
+        if (game_state.my_units.by_type[Factory].size()) {
+          if (game_state.my_units.by_type[Worker].size() < 8) {
+            command_queue.push({Worker});
+          } else {
+            command_queue.push({Ranger});
+          }
         }
 
         if (command_queue.empty()) {
           worker_rush.set_should_replicate(true);
         } else {
           worker_rush.set_should_replicate(false);
+          worker_rush.set_should_move_to_enemy(false);
           const auto command = command_queue.back();
 
           bool did_something = false;
-          switch (command.type) {
-            case BuildRocket:
-              did_something = build_rockets.run(
-                  game_state, game_state.my_units.by_type[Worker]);
+          switch (command.unit_type) {
+            case Worker:
+            case Knight:
+            case Ranger:
+            case Mage:
+            case Healer:
+              did_something = build[command.unit_type]->run(
+                  game_state, game_state.my_units.by_type[Factory]);
               break;
-            case BuildFactory:
-              did_something = build_rockets.run(
+            case Rocket:
+            case Factory:
+              did_something = build[command.unit_type]->run(
                   game_state, game_state.my_units.by_type[Worker]);
-              break;
-            case ProduceUnit:
               break;
           }
 
@@ -121,6 +146,7 @@ int main() {
         }
 
         board_rockets.run(game_state, game_state.my_units.all);
+        unboard.run(game_state, game_state.my_units.by_type[Factory]);
 
         break;
       case Mars:
@@ -128,11 +154,12 @@ int main() {
         break;
     }
 
-    auto rush_successful =
-        worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
-    if (rush_successful && !rush_complete) {
-      rush_complete = true;
-      round_rush_complete = game_state.round;
+    worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
+
+    for (int i = 0; i < constants::N_ROBOT_TYPES; i++) {
+      const auto unit_type = static_cast<UnitType>(i);
+      attack[unit_type]->run(game_state,
+                             game_state.my_units.by_type[unit_type]);
     }
 
     launch_rockets.run(game_state, game_state.my_units.by_type[Rocket]);
