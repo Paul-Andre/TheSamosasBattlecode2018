@@ -46,7 +46,7 @@ int main() {
   PairwiseDistances point_distances(game_state.map_info.passable_terrain,
                                     constants::POINT_KERNEL);
   PairwiseDistances ranger_attack_distances(
-      game_state.map_info.passable_terrain, constants::RANGER_KERNEL);
+      game_state.map_info.passable_terrain, constants::KERNEL[Ranger]);
 
   WorkerRushStrategy worker_rush(point_distances);
   RocketLaunchingStrategy launch_rockets(game_state);

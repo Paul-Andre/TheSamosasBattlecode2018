@@ -113,11 +113,28 @@ const static unsigned RESEARCH_COST[N_UNIT_TYPES][N_RESEARCH_LEVELS] = {
     },
 };
 
-// // Pairwise distances kernels.
-// // XXX: magic number from the specs.
+// Pairwise distances kernels.
+// XXX: magic number from the specs.
 const static vector<pair<int, int>> POINT_KERNEL = {{0, 0}};
-const static vector<pair<int, int>> RANGER_KERNEL = make_kernel(10, 50);
-const static vector<pair<int, int>> MAGE_KERNEL = make_kernel(-1, 30);
-const static vector<pair<int, int>> HEALER_KERNEL = make_kernel(-1, 30);
+const static vector<pair<int, int>> KERNEL[N_UNIT_TYPES] = {
+    POINT_KERNEL,         // Worker
+    POINT_KERNEL,         // Knight
+    make_kernel(10, 50),  // Ranger
+    make_kernel(-1, 30),  // Mage
+    make_kernel(-1, 30),  // Healer
+    POINT_KERNEL,         // Factory
+    POINT_KERNEL,         // Rocket
+};
+
+// Attack ranges.
+const static unsigned ATTACK_RANGE[N_UNIT_TYPES] = {
+    0,   // Worker
+    2,   // Knight
+    50,  // Ranger
+    30,  // Mage
+    30,  // Healer
+    0,   // Factory
+    0,   // Rocket
+};
 
 }  // namespace constants
