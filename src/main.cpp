@@ -87,7 +87,7 @@ int main() {
     printf("Karbonite: %d. \n", game_state.karbonite);
 
     // Spam buildings.
-    if ((game_state.round - round_rush_complete) % 50 == 49 &&
+    if (rush_complete && (game_state.round - round_rush_complete) % 50 == 49 &&
         game_state.PLANET == Earth) {
       command_queue.push({BuildRocket});
     }
