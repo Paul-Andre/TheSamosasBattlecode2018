@@ -21,6 +21,14 @@ class Strategy {
 
 class RobotStrategy : public Strategy {
  protected:
+  bool should_move_to_rockets = true;
+
+ public:
+  void set_should_move_to_rockets(bool status) {
+    should_move_to_rockets = status;
+  }
+
+ protected:
   void maybe_move(GameState &game_state, unsigned unit_id,
                   const MapLocation &goal, const PairwiseDistances &pd) {
     const auto loc = game_state.my_units.by_id[unit_id].second;
@@ -270,11 +278,20 @@ class WorkerRushStrategy : public WorkerStrategy {
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
     vector<MapLocation> target_locations;
 
-    unordered_map<uint16_t, unsigned> n_max_targetting;
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
       target_locations.push_back(loc);
+    }
 
+    if (should_move_to_rockets) {
+      for (const auto &rocket_id : game_state.my_units.by_type[Rocket]) {
+        const auto loc = game_state.my_units.by_id[rocket_id].second;
+        target_locations.push_back(loc);
+      }
+    }
+
+    unordered_map<uint16_t, unsigned> n_max_targetting;
+    for (const auto &loc : target_locations) {
       const auto x = loc.get_x();
       const auto y = loc.get_y();
       const uint16_t hash = (x << 8) + y;
