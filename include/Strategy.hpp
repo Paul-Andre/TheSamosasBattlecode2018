@@ -59,7 +59,7 @@ class RobotStrategy : public Strategy {
   void maybe_move_randomly(GameState &game_state, unsigned unit_id) {
     auto seed = rand();
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-      auto dir = (Direction)((i + seed) % 8);
+      auto dir = static_cast<Direction>((i + seed) % 8);
       if (game_state.gc.can_move(unit_id, dir) &&
           game_state.gc.is_move_ready(unit_id)) {
         game_state.move(unit_id, dir);
@@ -130,8 +130,8 @@ class WorkerStrategy : public RobotStrategy {
       } else {
         const auto seed = rand();
         for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-          const auto dir =
-              (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
+          const auto dir = static_cast<Direction>(
+              (i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
           if (game_state.gc.can_replicate(worker_id, dir)) {
             const auto replicated_id = game_state.replicate(worker_id, dir);
             return maybe_move_and_replicate(game_state, replicated_id, goal, pd,
@@ -151,8 +151,8 @@ class WorkerStrategy : public RobotStrategy {
     if (should_move) {
       const auto seed = rand();
       for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-        const auto dir =
-            (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
+        const auto dir = static_cast<Direction>(
+            (i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
         if (game_state.gc.can_move(worker_id, dir) &&
             game_state.gc.is_move_ready(worker_id)) {
           game_state.move(worker_id, dir);
@@ -164,8 +164,8 @@ class WorkerStrategy : public RobotStrategy {
     if (should_replicate) {
       const auto seed = rand();
       for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-        const auto dir =
-            (Direction)((i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
+        const auto dir = static_cast<Direction>(
+            (i + seed) % constants::N_DIRECTIONS_WITHOUT_CENTER);
         if (game_state.gc.can_replicate(worker_id, dir)) {
           const auto replicated_id = game_state.replicate(worker_id, dir);
           return maybe_move_and_replicate_randomly(game_state, replicated_id,
@@ -187,7 +187,7 @@ class WorkerStrategy : public RobotStrategy {
     auto can_harvest = false;
     unsigned max_karbonite = 0;
     for (int i = 0; i < constants::N_DIRECTIONS; i++) {
-      const auto dir = (Direction)i;
+      const auto dir = static_cast<Direction>(i);
       const auto probe_x = worker_x + constants::DX[i];
       const auto probe_y = worker_y + constants::DY[i];
       if (!game_state.map_info.is_valid_location(probe_x, probe_y)) continue;
@@ -278,7 +278,7 @@ class WorkerStrategy : public RobotStrategy {
 
       if (!game_state.is_safe_location(probe_x, probe_y, 2)) continue;
 
-      const auto dir = (Direction)i;
+      const auto dir = static_cast<Direction>(i);
       if (game_state.gc.can_blueprint(worker_id, unit_type, dir)) {
         game_state.blueprint(worker_id, unit_type, dir);
         return true;
