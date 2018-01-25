@@ -80,9 +80,13 @@ class RobotStrategy : public Strategy {
 class WorkerStrategy : public RobotStrategy {
  protected:
   bool should_replicate = true;
+  bool should_move_to_unbuilt_factories = true;
 
  public:
   void set_should_replicate(bool status) { should_replicate = status; }
+  void set_should_move_to_unbuilt_factories(bool status) {
+    should_move_to_unbuilt_factories = status;
+  }
 
  protected:
   void maybe_move_and_replicate(GameState &game_state, unsigned worker_id,
@@ -284,8 +288,18 @@ class WorkerRushStrategy : public WorkerStrategy {
     }
 
     if (should_move_to_rockets) {
-      for (const auto &rocket_id : game_state.my_units.by_type[Rocket]) {
+      for (const auto rocket_id : game_state.my_units.by_type[Rocket]) {
         const auto loc = game_state.my_units.by_id[rocket_id].second;
+        target_locations.push_back(loc);
+      }
+    }
+
+    if (should_move_to_unbuilt_factories) {
+      for (const auto factory_id : game_state.my_units.by_type[Factory]) {
+        const auto factory_unit = game_state.gc.get_unit(factory_id);
+        if (factory_unit.structure_is_built()) continue;
+
+        const auto loc = game_state.my_units.by_id[factory_id].second;
         target_locations.push_back(loc);
       }
     }
@@ -430,7 +444,7 @@ class BuildingStrategy : public WorkerStrategy {
   const UnitType unit_type;
 
  public:
-  BuildingStrategy(const UnitType &unit_type) : unit_type(unit_type) {}
+  BuildingStrategy(const UnitType unit_type) : unit_type(unit_type) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
     // FIXME: At least build randomly / safely instead of first that can.
@@ -508,7 +522,7 @@ class RocketLaunchingStrategy : public Strategy {
 
 class AttackStrategy : public RobotStrategy {
  protected:
-  const UnitType &unit_type;
+  const UnitType unit_type;
   const unsigned attack_range;
   const PairwiseDistances &distances;
 
@@ -580,5 +594,23 @@ class AttackStrategy : public RobotStrategy {
     }
 
     return game_state.enemy_units.all.size() == 0;
+  }
+};
+
+class UnitProductionStrategy : Strategy {
+ protected:
+  const UnitType unit_type;
+
+ public:
+  UnitProductionStrategy(UnitType unit_type) : unit_type(unit_type) {}
+
+  bool run(GameState &game_state, unordered_set<unsigned> factories) {
+    for (const auto factory_id : factories) {
+      if (game_state.gc.can_produce_robot(factory_id, unit_type)) {
+        game_state.produce(factory_id, unit_type);
+        return true;
+      }
+    }
+    return false;
   }
 };

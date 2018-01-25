@@ -169,3 +169,8 @@ unsigned GameState::replicate(unsigned id, Direction dir) {
   karbonite = gc.get_karbonite();
   return replicated_id;
 }
+
+void GameState::produce(unsigned factory_id, UnitType unit_type) {
+  gc.produce_robot(factory_id, unit_type);
+  karbonite = gc.get_karbonite();
+}

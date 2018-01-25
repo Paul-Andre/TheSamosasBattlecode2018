@@ -48,4 +48,5 @@ struct GameState {
   void harvest(unsigned id, Direction dir);
   unsigned replicate(unsigned id, Direction dir);
   unsigned blueprint(unsigned id, UnitType unit_type, Direction direction);
+  void produce(unsigned factory_id, UnitType unit_type);
 };
