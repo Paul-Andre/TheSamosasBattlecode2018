@@ -118,6 +118,8 @@ void GameState::launch(unsigned rocket_id, const MapLocation &loc) {
   for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
     const auto probe_x = x + constants::DX[i];
     const auto probe_y = y + constants::DY[i];
+
+    if (!map_info.is_valid_location(probe_x, probe_y)) continue;
     const auto probe_loc = map_info.get_location(probe_x, probe_y);
 
     if (gc.can_sense_location(probe_loc) && gc.has_unit_at_location(probe_loc))

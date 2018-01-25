@@ -2,4 +2,4 @@
 set -e
 
 make
-./build/agent
+valgrind ./build/agent
