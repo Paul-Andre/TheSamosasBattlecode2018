@@ -53,6 +53,33 @@ bool GameState::is_surrounding_enemy(const MapLocation &loc) const {
   return false;
 }
 
+unsigned GameState::count_obstructions(unsigned x, unsigned y) const {
+  unsigned obstructions = 0;
+  for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+    const auto probe_x = x + constants::DX[i];
+    const auto probe_y = y + constants::DY[i];
+
+    if (!map_info.is_valid_location(probe_x, probe_y)) continue;
+    if (enemy_units.is_occupied[probe_x][probe_y]) obstructions++;
+    if (!map_info.passable_terrain[probe_x][probe_y]) obstructions++;
+  }
+  return obstructions;
+}
+
+bool GameState::is_safe_location(unsigned x, unsigned y, int radius) const {
+  // TODO: Improve based on enemy unit types and their attack ranges.
+  for (int i = -radius; i <= radius; i++) {
+    for (int j = -radius; j <= radius; j++) {
+      const auto probe_x = x + i;
+      const auto probe_y = y + j;
+
+      if (!map_info.is_valid_location(probe_x, probe_y)) continue;
+      if (enemy_units.is_occupied[probe_x][probe_y]) return false;
+    }
+  }
+  return true;
+}
+
 void GameState::move(unsigned id, Direction dir) {
   my_units.move(id, dir);
   gc.move_robot(id, dir);

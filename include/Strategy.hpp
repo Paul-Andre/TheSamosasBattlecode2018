@@ -21,8 +21,8 @@ class Strategy {
 
 class RobotStrategy : public Strategy {
  protected:
-  void move(GameState &game_state, unsigned unit_id, const MapLocation &goal,
-            PairwiseDistances &pd) {
+  void maybe_move(GameState &game_state, unsigned unit_id,
+                  const MapLocation &goal, const PairwiseDistances &pd) {
     const auto loc = game_state.my_units.by_id[unit_id].second;
     const auto dir = silly_pathfinding(game_state, loc, goal, pd);
     if (game_state.gc.can_move(unit_id, dir) &&
@@ -31,7 +31,7 @@ class RobotStrategy : public Strategy {
     }
   }
 
-  void move_randomly(GameState &game_state, unsigned unit_id) {
+  void maybe_move_randomly(GameState &game_state, unsigned unit_id) {
     auto seed = rand();
     for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
       auto dir = (Direction)((i + seed) % 8);
@@ -237,7 +237,7 @@ class WorkerStrategy : public RobotStrategy {
       const auto probe_x = worker_x + constants::DX[i];
       const auto probe_y = worker_y + constants::DY[i];
 
-      if (count_obstructions(game_state, probe_x, probe_y) >= MAX_OBSTRUCTIONS)
+      if (game_state.count_obstructions(probe_x, probe_y) >= MAX_OBSTRUCTIONS)
         continue;
 
       const auto dir = (Direction)i;
@@ -248,35 +248,6 @@ class WorkerStrategy : public RobotStrategy {
     }
 
     return false;
-  }
-
-  unsigned count_obstructions(GameState &game_state, unsigned x, unsigned y) {
-    unsigned obstructions = 0;
-    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-      const auto probe_x = x + constants::DX[i];
-      const auto probe_y = y + constants::DY[i];
-
-      if (!game_state.map_info.is_valid_location(probe_x, probe_y)) continue;
-      if (game_state.enemy_units.is_occupied[probe_x][probe_y]) obstructions++;
-      if (!game_state.map_info.passable_terrain[probe_x][probe_y])
-        obstructions++;
-    }
-    return obstructions;
-  }
-
-  bool is_safe_location(GameState &game_state, unsigned x, unsigned y,
-                        int radius) {
-    // TODO: Improve based on enemy unit types and their attack ranges.
-    for (int i = -radius; i <= radius; i++) {
-      for (int j = -radius; j <= radius; j++) {
-        const auto probe_x = x + i;
-        const auto probe_y = y + j;
-
-        if (!game_state.map_info.is_valid_location(probe_x, probe_y)) continue;
-        if (game_state.enemy_units.is_occupied[probe_x][probe_y]) return false;
-      }
-    }
-    return true;
   }
 };
 
@@ -358,7 +329,7 @@ class WorkerRushStrategy : public WorkerStrategy {
       const uint16_t hash = (x << 8) + y;
       if (game_state.map_info.can_sense[x][y]) {
         n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
-                                 count_obstructions(game_state, x, y) + 1;
+                                 game_state.count_obstructions(x, y) + 1;
       } else {
         n_max_targetting[hash] = 10;
       }
@@ -490,13 +461,76 @@ class RocketLaunchingStrategy : public Strategy {
 class AttackStrategy : public RobotStrategy {
  protected:
   const UnitType &unit_type;
+  const unsigned attack_range;
   const PairwiseDistances &distances;
 
  public:
   AttackStrategy(const UnitType &unit_type, const PairwiseDistances &distances)
-      : unit_type(unit_type), distances(distances) {}
+      : unit_type(unit_type),
+        attack_range(constants::ATTACK_RANGE[unit_type]),
+        distances(distances) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
-    return false;
+    vector<MapLocation> target_locations;
+
+    unordered_map<uint16_t, unsigned> n_max_targetting;
+    for (const auto &unit : game_state.enemy_units.by_id) {
+      const auto loc = unit.second.second;
+      target_locations.push_back(loc);
+
+      const auto x = loc.get_x();
+      const auto y = loc.get_y();
+      const uint16_t hash = (x << 8) + y;
+      if (game_state.map_info.can_sense[x][y]) {
+        // Make this depend on the unit type.
+        n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
+                                 game_state.count_obstructions(x, y) + 1;
+      } else {
+        n_max_targetting[hash] = 4;
+      }
+    }
+
+    const auto targets =
+        find_targets(game_state, military_units, target_locations, distances);
+
+    unordered_map<uint16_t, unsigned> n_targetting;
+    unordered_set<unsigned> targetting;
+
+    // Move towards target.
+    for (const auto &target : targets) {
+      if (target.distance == numeric_limits<uint16_t>::max()) continue;
+
+      const uint16_t hash = (target.x << 8) + target.y;
+      if (n_targetting[hash] >= n_max_targetting[hash]) continue;
+      if (targetting.count(target.id)) continue;
+
+      const auto goal = game_state.map_info.get_location(target.x, target.y);
+
+      n_targetting[hash]++;
+      targetting.insert(target.id);
+
+      maybe_move(game_state, target.id, goal, distances);
+    }
+
+    for (const auto militant_id : military_units) {
+      const auto loc = game_state.my_units.by_id[militant_id].second;
+      auto enemies_within_range = game_state.gc.sense_nearby_units_by_team(
+          loc, attack_range, game_state.ENEMY_TEAM);
+
+      sort(enemies_within_range.begin(), enemies_within_range.end(),
+           [](const Unit &a, const Unit &b) {
+             return a.get_health() < b.get_health();
+           });
+
+      for (const Unit &enemy : enemies_within_range) {
+        const auto enemy_id = enemy.get_id();
+        if (game_state.gc.is_attack_ready(militant_id) &&
+            game_state.gc.can_attack(militant_id, enemy_id)) {
+          game_state.attack(militant_id, enemy_id);
+        }
+      }
+    }
+
+    return game_state.enemy_units.all.size() == 0;
   }
 };

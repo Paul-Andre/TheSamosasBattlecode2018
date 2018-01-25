@@ -34,6 +34,9 @@ struct GameState {
 
   bool is_surrounded(const MapLocation& loc) const;
   bool is_surrounding_enemy(const MapLocation& loc) const;
+  bool is_safe_location(unsigned x, unsigned y, int radius) const;
+
+  unsigned count_obstructions(unsigned x, unsigned y) const;
 
   void move(unsigned id, Direction dir);
   void load(unsigned structure_id, unsigned robot_id);
