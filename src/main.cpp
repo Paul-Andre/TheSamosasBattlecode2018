@@ -87,41 +87,46 @@ int main() {
     printf("Karbonite: %d. \n", game_state.karbonite);
 
     // Spam buildings.
-    if (rush_complete && (game_state.round - round_rush_complete) % 50 == 49 &&
-        game_state.PLANET == Earth) {
-      command_queue.push({BuildRocket});
+    switch (game_state.PLANET) {
+      case Earth:
+        if (rush_complete &&
+            (game_state.round - round_rush_complete) % 50 == 49 &&
+            game_state.PLANET == Earth) {
+          command_queue.push({BuildRocket});
+        }
+
+        if (command_queue.empty()) {
+          worker_rush.set_should_replicate(true);
+        } else {
+          worker_rush.set_should_replicate(false);
+          const auto command = command_queue.back();
+
+          bool did_something = false;
+          switch (command.type) {
+            case BuildRocket:
+              did_something = build_rockets.run(
+                  game_state, game_state.my_units.by_type[Worker]);
+              break;
+            case BuildFactory:
+              did_something = build_rockets.run(
+                  game_state, game_state.my_units.by_type[Worker]);
+              break;
+            case ProduceUnit:
+              break;
+          }
+
+          if (did_something) {
+            command_queue.pop();
+          }
+        }
+
+        board_rockets.run(game_state, game_state.my_units.all);
+
+        break;
+      case Mars:
+        unboard.run(game_state, game_state.my_units.by_type[Rocket]);
+        break;
     }
-
-    if (game_state.PLANET == Mars) {
-      unboard.run(game_state, game_state.my_units.by_type[Rocket]);
-    }
-
-    if (command_queue.empty()) {
-      worker_rush.set_should_replicate(true);
-    } else {
-      worker_rush.set_should_replicate(false);
-      const auto command = command_queue.back();
-
-      bool did_something = false;
-      switch (command.type) {
-        case BuildRocket:
-          did_something = build_rockets.run(
-              game_state, game_state.my_units.by_type[Worker]);
-          break;
-        case BuildFactory:
-          did_something = build_rockets.run(
-              game_state, game_state.my_units.by_type[Worker]);
-          break;
-        case ProduceUnit:
-          break;
-      }
-
-      if (did_something) {
-        command_queue.pop();
-      }
-    }
-
-    board_rockets.run(game_state, game_state.my_units.all);
 
     auto rush_successful =
         worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
