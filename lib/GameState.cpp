@@ -24,8 +24,8 @@ bool GameState::is_surrounded(const MapLocation &loc) const {
   const auto target_y = loc.get_y();
 
   for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    int x = target_x + constants::DX[i];
-    int y = target_y + constants::DY[i];
+    const auto x = target_x + constants::DX[i];
+    const auto y = target_y + constants::DY[i];
 
     if (!map_info.is_valid_location(x, y)) continue;
 
@@ -42,8 +42,8 @@ bool GameState::is_surrounding_enemy(const MapLocation &loc) const {
   const auto target_y = loc.get_y();
 
   for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
-    int x = target_x + constants::DX[i];
-    int y = target_y + constants::DY[i];
+    const auto x = target_x + constants::DX[i];
+    const auto y = target_y + constants::DY[i];
 
     if (!map_info.is_valid_location(x, y)) continue;
 

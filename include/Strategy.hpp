@@ -323,12 +323,14 @@ class WorkerRushStrategy : public WorkerStrategy {
       n_targetting[hash]++;
       targetting.insert(target.id);
 
-      const auto loc = game_state.my_units.by_id[target.id].second;
-      const auto should_not_move = game_state.is_surrounded(goal) &&
-                                   game_state.is_surrounding_enemy(loc);
+      const auto unit_loc = game_state.my_units.by_id[target.id].second;
+      const auto unit_x = unit_loc.get_x();
+      const auto unit_y = unit_loc.get_y();
+      const auto should_move =
+          should_move_worker(game_state, unit_x, unit_y, target.x, target.y);
 
       maybe_move_and_replicate(game_state, target.id, goal, distances,
-                               !should_not_move, should_replicate);
+                               should_move, should_replicate);
     }
 
     // Explore.
@@ -349,6 +351,25 @@ class WorkerRushStrategy : public WorkerStrategy {
   }
 
  protected:
+  bool should_move_worker(GameState &game_state, unsigned unit_x,
+                          unsigned unit_y, unsigned target_x,
+                          unsigned target_y) {
+    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+      const auto x = unit_x + constants::DX[i];
+      const auto y = unit_y + constants::DY[i];
+
+      if (!game_state.map_info.is_valid_location(x, y)) continue;
+      if (x == target_x && y == target_y) return true;
+
+      if (game_state.enemy_units.is_occupied[x][y]) {
+        const auto enemy_loc = game_state.map_info.get_location(x, y);
+        if (game_state.is_surrounded(enemy_loc)) return false;
+      }
+    }
+
+    return true;
+  }
+
   vector<unsigned> random_move_order(GameState &game_state,
                                      unordered_set<unsigned> unmovable) {
     vector<vector<bool>> visited(
