@@ -355,8 +355,12 @@ class WorkerRushStrategy : public WorkerStrategy {
       n_targetting[hash]++;
       targetting.insert(target.id);
 
-      maybe_move_and_replicate(game_state, target.id, goal, distances, true,
-                               should_replicate);
+      const auto loc = game_state.my_units.by_id[target.id].second;
+      const auto should_not_move = game_state.is_surrounded(goal) &&
+                                   game_state.is_surrounding_enemy(loc);
+
+      maybe_move_and_replicate(game_state, target.id, goal, distances,
+                               !should_not_move, should_replicate);
     }
 
     // Explore.
