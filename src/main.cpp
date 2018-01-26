@@ -30,15 +30,25 @@ const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.00,  // Rocke
 }};
 
+bool is_being_built(const GameState &game_state, UnitType unit_type) {
+  for (const auto unit_id : game_state.my_units.by_type[unit_type]) {
+    const auto unit = game_state.gc.get_unit(unit_id);
+    if (!unit.structure_is_built()) return true;
+  }
+  return false;
+}
+
 UnitType which_to_build(const GameState &game_state) {
   const auto worker_count = game_state.my_units.by_type[Worker].size();
   if (worker_count < MIN_WORKER_COUNT) {
     return Worker;
   }
 
-  const auto factory_count = game_state.my_units.by_type[Factory].size();
-  if (factory_count < MIN_FACTORY_COUNT) {
-    return Factory;
+  if (is_being_built(game_state, Factory)) {
+    const auto factory_count = game_state.my_units.by_type[Factory].size();
+    if (factory_count < MIN_FACTORY_COUNT) {
+      return Factory;
+    }
   }
 
   if (game_state.round >= 400 && game_state.round % 20 == 0) {
@@ -190,7 +200,8 @@ int main() {
         }
 
         // Try to build factory anyway to not waste karbonite.
-        if (which_to_build(game_state) != Rocket) {
+        if (!is_being_built(game_state, Factory) &&
+            which_to_build(game_state) != Rocket) {
           build[Factory]->run(game_state, game_state.my_units.by_type[Worker]);
         }
 
