@@ -44,6 +44,21 @@ struct GameState {
   void launch(unsigned rocket_id, const MapLocation& loc);
   void attack(unsigned id, unsigned target_id);
   void disintegrate(unsigned id);
+  void special_attack(unsigned id, UnitType unit_type, unsigned target_id);
+
+  inline bool can_special_attack(UnitType unit_type) {
+    return unit_type == Knight || unit_type == Healer;
+  }
+
+  inline void update_if_dead(unsigned id) {
+    if (!gc.has_unit(id)) {
+      if (enemy_units.by_id.count(id)) {
+        enemy_units.remove(id);
+      } else {
+        my_units.remove(id);
+      }
+    }
+  }
 
   void harvest(unsigned id, Direction dir);
   unsigned replicate(unsigned id, Direction dir);

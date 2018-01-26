@@ -575,12 +575,14 @@ class AttackStrategy : public RobotStrategy {
  protected:
   const UnitType unit_type;
   const unsigned attack_range;
+  const unsigned special_attack_range;
   const PairwiseDistances &distances;
 
  public:
   AttackStrategy(const UnitType unit_type, const PairwiseDistances &distances)
       : unit_type(unit_type),
         attack_range(constants::ATTACK_RANGE[unit_type]),
+        special_attack_range(constants::SPECIAL_ATTACK_RANGE[unit_type]),
         distances(distances) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
@@ -620,9 +622,25 @@ class AttackStrategy : public RobotStrategy {
       }
 
       const auto loc = game_state.my_units.by_id[militant_id].second;
+
+      if (game_state.can_special_attack(unit_type)) {
+        auto enemies_within_special_range =
+            game_state.gc.sense_nearby_units_by_team(loc, special_attack_range,
+                                                     game_state.ENEMY_TEAM);
+        sort(enemies_within_special_range.begin(),
+             enemies_within_special_range.end(),
+             [](const auto &a, const auto &b) {
+               return a.get_health() < b.get_health();
+             });
+
+        for (const Unit &enemy : enemies_within_special_range) {
+          const auto enemy_id = enemy.get_id();
+          game_state.special_attack(militant_id, unit_type, enemy_id);
+        }
+      }
+
       auto enemies_within_range = game_state.gc.sense_nearby_units_by_team(
           loc, attack_range, game_state.ENEMY_TEAM);
-
       sort(enemies_within_range.begin(), enemies_within_range.end(),
            [](const auto &a, const auto &b) {
              return a.get_health() < b.get_health();
@@ -645,6 +663,7 @@ class HealingStrategy : public RobotStrategy {
  protected:
   const PairwiseDistances &distances;
   const unsigned healing_range = constants::ATTACK_RANGE[Healer];
+  const unsigned overcharge_range = constants::SPECIAL_ATTACK_RANGE[Healer];
 
  public:
   HealingStrategy(const PairwiseDistances &distances) : distances(distances) {}
@@ -698,7 +717,8 @@ class HealingStrategy : public RobotStrategy {
       sort(my_units_within_range.begin(), my_units_within_range.end(),
            [](const auto &a, const auto &b) {
              // Heal lowest health first.
-             return a.get_health() < b.get_health();
+             return a.get_health() / (double)a.get_max_health() <
+                    b.get_health() / (double)b.get_max_health();
            });
 
       for (const Unit &unit : my_units_within_range) {

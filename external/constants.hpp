@@ -136,5 +136,14 @@ const static array<unsigned, N_UNIT_TYPES> ATTACK_RANGE = {
     0,   // Factory
     0,   // Rocket
 };
+const static array<unsigned, N_UNIT_TYPES> SPECIAL_ATTACK_RANGE = {
+    0,     // Worker
+    10,    // Knight
+    2500,  // Ranger
+    8,     // Mage
+    30,    // Healer
+    0,     // Factory
+    0,     // Rocket
+};
 
 }  // namespace constants

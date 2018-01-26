@@ -142,13 +142,31 @@ void GameState::disintegrate(unsigned id) {
 
 void GameState::attack(unsigned id, unsigned target_id) {
   gc.attack(id, target_id);
-  if (!gc.has_unit(target_id)) {
-    if (enemy_units.by_id.count(target_id)) {
-      enemy_units.remove(target_id);
-    } else {
-      // Attacked self...
-      my_units.remove(target_id);
-    }
+  update_if_dead(target_id);
+}
+
+void GameState::special_attack(unsigned id, UnitType unit_type,
+                               unsigned target_id) {
+  switch (unit_type) {
+    case Worker:
+      break;
+    case Knight:
+      if (gc.can_javelin(id, target_id) && gc.is_javelin_ready(id)) {
+        gc.javelin(id, target_id);
+        update_if_dead(target_id);
+      }
+      break;
+    case Ranger:
+      break;
+    case Mage:
+      break;
+    case Healer:
+      if (gc.can_overcharge(id, target_id) && gc.is_overcharge_ready(id)) {
+        gc.overcharge(id, target_id);
+      }
+      break;
+    default:
+      break;
   }
 }
 
