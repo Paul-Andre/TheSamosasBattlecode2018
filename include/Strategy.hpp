@@ -617,6 +617,81 @@ class AttackStrategy : public RobotStrategy {
   }
 };
 
+class HealingStrategy : public RobotStrategy {
+ protected:
+  const PairwiseDistances &distances;
+  const unsigned healing_range = constants::ATTACK_RANGE[Healer];
+
+ public:
+  HealingStrategy(const PairwiseDistances &distances) : distances(distances) {}
+
+  bool run(GameState &game_state, unordered_set<unsigned> healers) {
+    vector<MapLocation> target_locations;
+
+    for (const auto &unit : game_state.my_units.by_id) {
+      // We don't want healers to target themselves or eachother, otherwise they
+      // can just ignore other units and clump together since we're sorting by
+      // distance.
+      const auto id = unit.first;
+      if (healers.count(id)) continue;
+
+      const auto loc = unit.second.second;
+      target_locations.push_back(loc);
+    }
+
+    const auto targets =
+        find_targets(game_state, healers, target_locations, distances);
+
+    unordered_map<uint16_t, unsigned> n_targetting;
+    unordered_set<unsigned> targetting;
+
+    // Move towards target.
+    for (const auto &target : targets) {
+      if (target.distance == numeric_limits<uint16_t>::max()) continue;
+
+      const uint16_t hash = (target.x << 8) + target.y;
+      if (n_targetting[hash] >= 10) continue;
+      if (targetting.count(target.id)) continue;
+
+      const auto goal = game_state.map_info.get_location(target.x, target.y);
+
+      n_targetting[hash]++;
+      targetting.insert(target.id);
+
+      maybe_move(game_state, target.id, goal, distances);
+    }
+
+    // Heal nearby targets.
+    for (const auto healer_id : healers) {
+      if (!targetting.count(healer_id)) {
+        maybe_move_randomly(game_state, healer_id);
+      }
+
+      const auto loc = game_state.my_units.by_id[healer_id].second;
+      auto my_units_within_range = game_state.gc.sense_nearby_units_by_team(
+          loc, healing_range, game_state.MY_TEAM);
+
+      sort(my_units_within_range.begin(), my_units_within_range.end(),
+           [](const auto &a, const auto &b) {
+             // Heal lowest health first.
+             return a.get_health() < b.get_health();
+           });
+
+      for (const Unit &unit : my_units_within_range) {
+        const auto unit_id = unit.get_id();
+
+        // To heal, we must call attack()...
+        if (game_state.gc.is_attack_ready(healer_id) &&
+            game_state.gc.can_attack(healer_id, unit_id)) {
+          game_state.attack(healer_id, unit_id);
+        }
+      }
+    }
+
+    return true;
+  }
+};
+
 class UnitProductionStrategy : public Strategy {
  protected:
   const UnitType unit_type;
