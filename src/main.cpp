@@ -16,6 +16,57 @@
 using namespace std;
 using namespace bc;
 
+const static int MIN_WORKER_COUNT = 8;
+const static int MIN_FACTORY_COUNT = 3;
+
+// Defines distribution of unit types in percentages.
+// Should at most add up to 1.
+const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
+    0.15,  // Worker
+    0.70,  // Knight
+    0.00,  // Ranger
+    0.00,  // Mage
+    0.15,  // Healer
+    0.00,  // Factory
+    0.00,  // Rocket
+}};
+
+UnitType which_to_build(const GameState &game_state) {
+  const auto worker_count = game_state.my_units.by_type[Worker].size();
+  if (worker_count < MIN_WORKER_COUNT) {
+    return Worker;
+  }
+
+  const auto factory_count = game_state.my_units.by_type[Factory].size();
+  if (factory_count < MIN_FACTORY_COUNT) {
+    return Factory;
+  }
+
+  if (game_state.round >= 400 && game_state.round % 20 == 0) {
+    return Rocket;
+  }
+
+  const double unit_count = game_state.my_units.all.size();
+  array<double, constants::N_UNIT_TYPES> current_distribution_error{};
+  for (int i = 0; i < constants::N_UNIT_TYPES; i++) {
+    current_distribution_error[i] =
+        target_distribution[i] -
+        game_state.my_units.by_type[i].size() / unit_count;
+  }
+
+  auto max_error = 0.00;
+  UnitType unit_to_build;
+  for (int i = 0; i < constants::N_UNIT_TYPES; i++) {
+    const auto current_error = current_distribution_error[i];
+    if (current_error > max_error) {
+      max_error = current_error;
+      unit_to_build = static_cast<UnitType>(i);
+    }
+  }
+
+  return unit_to_build;
+}
+
 int main() {
   cout << "Bot starting..." << endl;
 
@@ -52,7 +103,7 @@ int main() {
   RocketLaunchingStrategy launch_rockets(game_state);
   RocketBoardingStrategy board_rockets{};
   UnboardingStrategy unboard{};
-  array<Strategy*, constants::N_UNIT_TYPES> build = {{
+  array<Strategy *, constants::N_UNIT_TYPES> build = {{
       new UnitProductionStrategy(Worker),
       new UnitProductionStrategy(Knight),
       new UnitProductionStrategy(Ranger),
@@ -61,7 +112,7 @@ int main() {
       new BuildingStrategy(Factory),
       new BuildingStrategy(Rocket),
   }};
-  array<Strategy*, constants::N_ROBOT_TYPES> attack = {{
+  array<Strategy *, constants::N_ROBOT_TYPES> attack = {{
       new NullStrategy(),  // Workers cannot attack.
       new AttackStrategy(Knight, point_distances),
       new AttackStrategy(Ranger, ranger_attack_distances),
@@ -95,59 +146,49 @@ int main() {
     cout << "Round: " << game_state.round << endl;
     cout << "Karbonite: " << game_state.karbonite << endl;
 
-    // Spam buildings.
     switch (game_state.PLANET) {
-      case Earth:
-        if (game_state.round % 10 == 0 &&
-            game_state.my_units.by_type[Factory].size() < 3) {
-          build_queue.push({Factory});
-        }
-
-        if (game_state.round > 400 && game_state.round % 20 == 0) {
-          build_queue.push({Rocket});
-        }
-
-        if (game_state.my_units.by_type[Factory].size()) {
-          if (game_state.my_units.by_type[Worker].size() < 8) {
-            build_queue.push({Worker});
-          } else {
-            build_queue.push({Ranger});
-          }
-        }
+      case Earth: {
+        // Save karbonite.
+        worker_rush.set_should_replicate(false);
 
         if (build_queue.empty()) {
-          worker_rush.set_should_replicate(true);
-        } else {
-          worker_rush.set_should_replicate(false);
-          worker_rush.set_should_move_to_enemy(false);
-          const auto unit_type = build_queue.back();
+          build_queue.push(which_to_build(game_state));
+        }
 
-          bool did_something = false;
-          switch (unit_type) {
-            case Worker:
-            case Knight:
-            case Ranger:
-            case Mage:
-            case Healer:
-              did_something = build[unit_type]->run(
-                  game_state, game_state.my_units.by_type[Factory]);
+        auto did_something = false;
+        const auto unit_type = build_queue.back();
+        switch (unit_type) {
+          case Worker:
+            if (game_state.my_units.by_type[Worker].size()) {
+              // Favor creating workers by replicating because faster.
+              worker_rush.set_should_replicate(true);
+              did_something = true;
               break;
-            case Rocket:
-            case Factory:
-              did_something = build[unit_type]->run(
-                  game_state, game_state.my_units.by_type[Worker]);
-              break;
-          }
+            } else {
+              // NO MORE WORKERS!
+              // FALLTHROUGH TO BUILD FROM FACTORY!
+            }
+          case Knight:
+          case Ranger:
+          case Mage:
+          case Healer:
+            did_something = build[unit_type]->run(
+                game_state, game_state.my_units.by_type[Factory]);
+            break;
+          case Rocket:
+          case Factory:
+            did_something = build[unit_type]->run(
+                game_state, game_state.my_units.by_type[Worker]);
+            break;
+        }
 
-          if (did_something) {
-            build_queue.pop();
-          }
+        if (did_something) {
+          build_queue.pop();
         }
 
         board_rockets.run(game_state, game_state.my_units.all);
         unboard.run(game_state, game_state.my_units.by_type[Factory]);
-
-        break;
+      } break;
       case Mars:
         unboard.run(game_state, game_state.my_units.by_type[Rocket]);
         break;

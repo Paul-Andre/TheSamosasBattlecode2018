@@ -450,7 +450,7 @@ class WorkerRushStrategy : public WorkerStrategy {
             game_state.my_units.is_occupied[x][y]) {
           auto id = game_state.my_units.by_location[x][y];
           if (unmovable.count(id) != 0) continue;
-		  if (!workers.count(id)) continue;
+          if (!workers.count(id)) continue;
 
           if (!game_state.gc.is_move_ready(id)) continue;
 
@@ -564,39 +564,37 @@ class AttackStrategy : public RobotStrategy {
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
     vector<MapLocation> target_locations;
 
-
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
       target_locations.push_back(loc);
     }
 
+    const auto targets =
+        find_targets(game_state, military_units, target_locations, distances);
 
-	const auto targets =
-		find_targets(game_state, military_units, target_locations, distances);
+    unordered_map<uint16_t, unsigned> n_targetting;
+    unordered_set<unsigned> targetting;
 
-	unordered_map<uint16_t, unsigned> n_targetting;
-	unordered_set<unsigned> targetting;
+    // Move towards target.
+    for (const auto &target : targets) {
+      if (target.distance == numeric_limits<uint16_t>::max()) continue;
 
-	// Move towards target.
-	for (const auto &target : targets) {
-		if (target.distance == numeric_limits<uint16_t>::max()) continue;
+      const uint16_t hash = (target.x << 8) + target.y;
+      if (n_targetting[hash] >= 10) continue;
+      if (targetting.count(target.id)) continue;
 
-		const uint16_t hash = (target.x << 8) + target.y;
-		if (n_targetting[hash] >= 10) continue;
-		if (targetting.count(target.id)) continue;
+      const auto goal = game_state.map_info.get_location(target.x, target.y);
 
-		const auto goal = game_state.map_info.get_location(target.x, target.y);
+      n_targetting[hash]++;
+      targetting.insert(target.id);
 
-		n_targetting[hash]++;
-		targetting.insert(target.id);
-
-		maybe_move(game_state, target.id, goal, distances);
-	}
+      maybe_move(game_state, target.id, goal, distances);
+    }
 
     // Attack nearby targets.
     for (const auto militant_id : military_units) {
       if (!targetting.count(militant_id)) {
-		maybe_move_randomly(game_state, militant_id);
+        maybe_move_randomly(game_state, militant_id);
       }
 
       const auto loc = game_state.my_units.by_id[militant_id].second;
