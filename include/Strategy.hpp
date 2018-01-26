@@ -730,9 +730,42 @@ class HealingStrategy : public RobotStrategy {
           game_state.attack(healer_id, unit_id);
         }
       }
+
+      if (game_state.gc.is_overcharge_ready(healer_id)) {
+        auto my_units_within_range = game_state.gc.sense_nearby_units_by_team(
+            loc, healing_range, game_state.MY_TEAM);
+        sort(my_units_within_range.begin(), my_units_within_range.end(),
+             [&](const auto &a, const auto &b) {
+               return overcharge_score(a) < overcharge_score(b);
+             });
+
+        for (const Unit &unit : my_units_within_range) {
+          const auto unit_id = unit.get_id();
+          game_state.special_attack(healer_id, Healer, unit_id);
+        }
+      }
     }
 
     return true;
+  }
+
+ protected:
+  double overcharge_score(const Unit &unit) {
+    auto score = unit.get_health() / (double)unit.get_max_health();
+    switch (unit.get_unit_type()) {
+      case Worker:
+        score *= 5;
+        break;
+      case Knight:
+        score *= 0.5;
+        break;
+      case Healer:
+        score *= 2;
+        break;
+      default:
+        break;
+    }
+    return score;
   }
 };
 
