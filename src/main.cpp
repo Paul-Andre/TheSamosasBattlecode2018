@@ -21,12 +21,12 @@ const static int MIN_FACTORY_COUNT = 2;
 // Defines distribution of unit types in percentages.
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
-    0.00,  // Worker
-    0.60,  // Knight
+    0.10,  // Worker
+    0.50,  // Knight
     0.20,  // Ranger
     0.00,  // Mage
-    0.20,  // Healer
-    0.00,  // Factory
+    0.15,  // Healer
+    0.05,  // Factory
     0.00,  // Rocke
 }};
 
@@ -213,12 +213,14 @@ int main() {
         break;
     }
 
-    worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
-
-    for (int i = 0; i < constants::N_ROBOT_TYPES; i++) {
-      const auto unit_type = static_cast<UnitType>(i);
-      attack[unit_type]->run(game_state,
-                             game_state.my_units.by_type[unit_type]);
+    // Do this twice because might have overcharged.
+    for (int i = 0; i < 2; i++) {
+      worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
+      for (int i = 0; i < constants::N_ROBOT_TYPES; i++) {
+        const auto unit_type = static_cast<UnitType>(i);
+        attack[unit_type]->run(game_state,
+                               game_state.my_units.by_type[unit_type]);
+      }
     }
 
     launch_rockets.run(game_state, game_state.my_units.by_type[Rocket]);
