@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <limits>
+#include <queue>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -405,13 +406,6 @@ class WorkerRushStrategy : public WorkerStrategy {
       maybe_move_and_replicate_randomly(game_state, id, true, should_replicate);
     }
 
-    // Verify we've successfully surrounded the enemy or not.
-    for (const auto enemy_id : game_state.enemy_units.all) {
-      const auto loc = game_state.enemy_units.by_id[enemy_id].second;
-      if (!game_state.is_surrounded(loc)) {
-        return false;
-      }
-    }
     return true;
   }
 

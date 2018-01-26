@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <ctime>
 #include <iostream>
-#include <queue>
 
 #include "GameState.hpp"
 #include "MapInfo.hpp"
@@ -17,18 +16,18 @@ using namespace std;
 using namespace bc;
 
 const static int MIN_WORKER_COUNT = 8;
-const static int MIN_FACTORY_COUNT = 3;
+const static int MIN_FACTORY_COUNT = 2;
 
 // Defines distribution of unit types in percentages.
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
-    0.15,  // Worker
-    0.70,  // Knight
-    0.00,  // Ranger
+    0.00,  // Worker
+    0.60,  // Knight
+    0.20,  // Ranger
     0.00,  // Mage
-    0.15,  // Healer
+    0.20,  // Healer
     0.00,  // Factory
-    0.00,  // Rocket
+    0.00,  // Rocke
 }};
 
 UnitType which_to_build(const GameState &game_state) {
@@ -149,8 +148,6 @@ int main() {
     gc.queue_research(UnitType::Rocket);  // Increased capacity (100)
   }
 
-  queue<UnitType> build_queue;
-
   while (true) {
     game_state.update();
 
@@ -163,39 +160,38 @@ int main() {
         // Save karbonite.
         worker_rush.set_should_replicate(false);
 
-        if (build_queue.empty()) {
-          build_queue.push(which_to_build(game_state));
-        }
-
-        auto did_something = false;
-        const auto unit_type = build_queue.back();
-        switch (unit_type) {
-          case Worker:
-            if (game_state.my_units.by_type[Worker].size()) {
-              // Favor creating workers by replicating because faster.
-              worker_rush.set_should_replicate(true);
-              did_something = true;
+        auto is_successful = true;
+        while (is_successful) {
+          is_successful = false;
+          const auto unit_type = which_to_build(game_state);
+          switch (unit_type) {
+            case Worker:
+              if (game_state.my_units.by_type[Worker].size()) {
+                // Favor creating workers by replicating because faster.
+                worker_rush.set_should_replicate(true);
+                break;
+              } else {
+                // NO MORE WORKERS!
+                // FALLTHROUGH TO BUILD FROM FACTORY!
+              }
+            case Knight:
+            case Ranger:
+            case Mage:
+            case Healer:
+              is_successful = build[unit_type]->run(
+                  game_state, game_state.my_units.by_type[Factory]);
               break;
-            } else {
-              // NO MORE WORKERS!
-              // FALLTHROUGH TO BUILD FROM FACTORY!
-            }
-          case Knight:
-          case Ranger:
-          case Mage:
-          case Healer:
-            did_something = build[unit_type]->run(
-                game_state, game_state.my_units.by_type[Factory]);
-            break;
-          case Rocket:
-          case Factory:
-            did_something = build[unit_type]->run(
-                game_state, game_state.my_units.by_type[Worker]);
-            break;
+            case Rocket:
+            case Factory:
+              is_successful = build[unit_type]->run(
+                  game_state, game_state.my_units.by_type[Worker]);
+              break;
+          }
         }
 
-        if (did_something) {
-          build_queue.pop();
+        // Try to build factory anyway to not waste karbonite.
+        if (which_to_build(game_state) != Rocket) {
+          build[Factory]->run(game_state, game_state.my_units.by_type[Worker]);
         }
 
         board_rockets.run(game_state, game_state.my_units.all);
