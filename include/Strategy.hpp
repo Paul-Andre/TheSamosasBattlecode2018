@@ -98,12 +98,20 @@ class WorkerStrategy : public RobotStrategy {
  protected:
   bool should_replicate = true;
   bool should_move_to_enemy = false;
+  bool should_move_to_karbonite = true;
+  bool should_move_to_unbuilt_rockets = true;
   bool should_move_to_unbuilt_factories = true;
 
  public:
   void set_should_replicate(bool status) { should_replicate = status; }
   void set_should_move_to_unbuilt_factories(bool status) {
     should_move_to_unbuilt_factories = status;
+  }
+  void set_should_move_to_unbuilt_rockets(bool status) {
+    should_move_to_unbuilt_rockets = status;
+  }
+  void set_should_move_to_karbonite(bool status) {
+    should_move_to_karbonite = true;
   }
 
  protected:
@@ -291,7 +299,6 @@ class WorkerStrategy : public RobotStrategy {
 
 class WorkerRushStrategy : public WorkerStrategy {
  protected:
-  bool should_move_to_enemy = true;
   const PairwiseDistances distances;
 
  public:
@@ -308,8 +315,13 @@ class WorkerRushStrategy : public WorkerStrategy {
       }
     }
 
-    if (should_move_to_rockets) {
+    if (should_move_to_unbuilt_rockets || should_move_to_rockets) {
       for (const auto rocket_id : game_state.my_units.by_type[Rocket]) {
+        if (!should_move_to_rockets) {
+          const auto rocket_unit = game_state.gc.get_unit(rocket_id);
+          if (rocket_unit.structure_is_built()) continue;
+        }
+
         const auto loc = game_state.my_units.by_id[rocket_id].second;
         target_locations.push_back(loc);
       }
@@ -337,6 +349,22 @@ class WorkerRushStrategy : public WorkerStrategy {
                                  game_state.count_obstructions(x, y) + 1;
       } else {
         n_max_targetting[hash] = 10;
+      }
+    }
+
+    if (should_move_to_karbonite) {
+      for (int x = 0; x < game_state.map_info.width; x++) {
+        for (int y = 0; y < game_state.map_info.height; y++) {
+          if (game_state.map_info.karbonite[x][y]) {
+            // Check if already being targeted.
+            const uint16_t hash = (x << 8) + y;
+            if (n_max_targetting.count(hash)) continue;
+
+            const auto loc = game_state.map_info.get_location(x, y);
+            target_locations.push_back(loc);
+            n_max_targetting[hash] = 1;
+          }
+        }
       }
     }
 
