@@ -66,7 +66,7 @@ int main() {
       new AttackStrategy(Knight, point_distances),
       new AttackStrategy(Ranger, ranger_attack_distances),
       new AttackStrategy(Mage, mage_or_healer_distances),
-      new AttackStrategy(Healer, mage_or_healer_distances),
+      new HealingStrategy(mage_or_healer_distances),
   }};
 
   const auto stop_s = clock();
