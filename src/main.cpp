@@ -27,7 +27,7 @@ const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.00,  // Mage
     0.15,  // Healer
     0.05,  // Factory
-    0.00,  // Rocke
+    0.00,  // Rocket
 }};
 
 bool is_being_built(const GameState &game_state, UnitType unit_type) {
