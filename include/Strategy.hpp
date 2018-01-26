@@ -276,7 +276,7 @@ class WorkerStrategy : public RobotStrategy {
       if (game_state.count_obstructions(probe_x, probe_y) >= MAX_OBSTRUCTIONS)
         continue;
 
-      if (!game_state.is_safe_location(probe_x, probe_y, 2)) continue;
+      if (!game_state.is_safe_location(probe_x, probe_y, 1)) continue;
 
       const auto dir = static_cast<Direction>(i);
       if (game_state.gc.can_blueprint(worker_id, unit_type, dir)) {
