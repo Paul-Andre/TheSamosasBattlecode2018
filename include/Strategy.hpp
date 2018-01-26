@@ -530,7 +530,11 @@ class RocketLaunchingStrategy : public Strategy {
       const auto rocket_unit = game_state.gc.get_unit(rocket_id);
 
       if (!rocket_unit.structure_is_built()) continue;
-      if (rocket_unit.get_structure_garrison().size() < MIN_UNITS_TO_LAUNCH)
+
+      // Don't launch if insufficient units in garrison unless it's about to
+      // flood - in which case launch all the things.
+      if (rocket_unit.get_structure_garrison().size() < MIN_UNITS_TO_LAUNCH &&
+          game_state.round < constants::FLOOD_ROUND - 1)
         continue;
 
       const auto ml = mars_map_info.get_random_passable_location();
