@@ -629,8 +629,8 @@ class AttackStrategy : public RobotStrategy {
                                                      game_state.ENEMY_TEAM);
         sort(enemies_within_special_range.begin(),
              enemies_within_special_range.end(),
-             [](const auto &a, const auto &b) {
-               return a.get_health() < b.get_health();
+             [&](const auto &a, const auto &b) {
+               return attack_score(a) < attack_score(b);
              });
 
         for (const Unit &enemy : enemies_within_special_range) {
@@ -642,8 +642,8 @@ class AttackStrategy : public RobotStrategy {
       auto enemies_within_range = game_state.gc.sense_nearby_units_by_team(
           loc, attack_range, game_state.ENEMY_TEAM);
       sort(enemies_within_range.begin(), enemies_within_range.end(),
-           [](const auto &a, const auto &b) {
-             return a.get_health() < b.get_health();
+           [&](const auto &a, const auto &b) {
+             return attack_score(a) < attack_score(b);
            });
 
       for (const Unit &enemy : enemies_within_range) {
@@ -656,6 +656,30 @@ class AttackStrategy : public RobotStrategy {
     }
 
     return game_state.enemy_units.all.size() == 0;
+  }
+
+ protected:
+  double attack_score(const Unit &unit) {
+    auto score = unit.get_health();
+    switch (unit.get_unit_type()) {
+      case Worker:
+        score *= 3;
+        break;
+      case Mage:
+        score *= 0.2;
+        break;
+      case Ranger:
+        score *= 0.3;
+      case Knight:
+        score *= 0.5;
+        break;
+      case Healer:
+        score *= 2;
+        break;
+      default:
+        break;
+    }
+    return score;
   }
 };
 
@@ -733,7 +757,7 @@ class HealingStrategy : public RobotStrategy {
 
       if (game_state.gc.is_overcharge_ready(healer_id)) {
         auto my_units_within_range = game_state.gc.sense_nearby_units_by_team(
-            loc, healing_range, game_state.MY_TEAM);
+            loc, overcharge_range, game_state.MY_TEAM);
         sort(my_units_within_range.begin(), my_units_within_range.end(),
              [&](const auto &a, const auto &b) {
                return overcharge_score(a) < overcharge_score(b);
