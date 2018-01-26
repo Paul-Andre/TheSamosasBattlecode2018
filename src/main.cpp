@@ -55,7 +55,7 @@ UnitType which_to_build(const GameState &game_state) {
   }
 
   auto max_error = 0.00;
-  UnitType unit_to_build;
+  UnitType unit_to_build = Worker;
   for (int i = 0; i < constants::N_UNIT_TYPES; i++) {
     const auto current_error = current_distribution_error[i];
     if (current_error > max_error) {
@@ -127,14 +127,26 @@ int main() {
 
   // First thing get some research going
   if (game_state.PLANET == Earth) {
-    gc.queue_research(UnitType::Worker);  // One more karbonite per worker
-    gc.queue_research(UnitType::Ranger);  // Faster ranger
-    gc.queue_research(UnitType::Worker);  // Increase build speed
-    gc.queue_research(UnitType::Worker);  // Increase build speed
-    gc.queue_research(UnitType::Worker);  // Increase build speed
-    gc.queue_research(UnitType::Rocket);  // To Mars
-    gc.queue_research(UnitType::Ranger);  // Larger ranger vision
-    gc.queue_research(UnitType::Ranger);  // Snipe
+    gc.queue_research(UnitType::Worker);  // One more karbonite per worker (25)
+    gc.queue_research(UnitType::Knight);  // More defense (25)
+    gc.queue_research(UnitType::Knight);  // More defense (75)
+    gc.queue_research(UnitType::Knight);  // Javelin (100)
+    gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
+    gc.queue_research(UnitType::Ranger);  // Larger ranger vision (100)
+    gc.queue_research(UnitType::Healer);  // Increase healing (25)
+    gc.queue_research(UnitType::Rocket);  // To Mars (50)
+    gc.queue_research(UnitType::Healer);  // Increase healing (100)
+    gc.queue_research(UnitType::Healer);  // Overcharge (100)
+    gc.queue_research(UnitType::Worker);  // Increase build speed (75)
+    gc.queue_research(UnitType::Worker);  // Increase build speed (75)
+    gc.queue_research(UnitType::Worker);  // Increase build speed (75)
+    gc.queue_research(UnitType::Rocket);  // Faster rockets (100)
+    gc.queue_research(UnitType::Ranger);  // Snipe (200)
+    gc.queue_research(UnitType::Mage);    // Increase attack (25)
+    gc.queue_research(UnitType::Mage);    // Increase attack (25)
+    gc.queue_research(UnitType::Mage);    // Increase attack (25)
+    gc.queue_research(UnitType::Mage);    // Increase attack (25)
+    gc.queue_research(UnitType::Rocket);  // Increased capacity (100)
   }
 
   queue<UnitType> build_queue;
