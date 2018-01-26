@@ -21,12 +21,12 @@ const static int MIN_FACTORY_COUNT = 2;
 // Defines distribution of unit types in percentages.
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
-    0.00,  // Worker
-    0.60,  // Knight
+    0.10,  // Worker
+    0.50,  // Knight
     0.20,  // Ranger
     0.00,  // Mage
-    0.20,  // Healer
-    0.00,  // Factory
+    0.15,  // Healer
+    0.05,  // Factory
     0.00,  // Rocke
 }};
 
