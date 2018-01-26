@@ -629,7 +629,7 @@ class AttackStrategy : public RobotStrategy {
                                                      game_state.ENEMY_TEAM);
         sort(enemies_within_special_range.begin(),
              enemies_within_special_range.end(),
-             [&](const auto &a, const auto &b) {
+             [](const auto &a, const auto &b) {
                return attack_score(a) < attack_score(b);
              });
 
@@ -642,7 +642,7 @@ class AttackStrategy : public RobotStrategy {
       auto enemies_within_range = game_state.gc.sense_nearby_units_by_team(
           loc, attack_range, game_state.ENEMY_TEAM);
       sort(enemies_within_range.begin(), enemies_within_range.end(),
-           [&](const auto &a, const auto &b) {
+           [](const auto &a, const auto &b) {
              return attack_score(a) < attack_score(b);
            });
 
@@ -659,7 +659,7 @@ class AttackStrategy : public RobotStrategy {
   }
 
  protected:
-  double attack_score(const Unit &unit) {
+  static double attack_score(const Unit &unit) {
     auto score = unit.get_health();
     switch (unit.get_unit_type()) {
       case Worker:
@@ -759,7 +759,7 @@ class HealingStrategy : public RobotStrategy {
         auto my_units_within_range = game_state.gc.sense_nearby_units_by_team(
             loc, overcharge_range, game_state.MY_TEAM);
         sort(my_units_within_range.begin(), my_units_within_range.end(),
-             [&](const auto &a, const auto &b) {
+             [](const auto &a, const auto &b) {
                return overcharge_score(a) < overcharge_score(b);
              });
 
@@ -774,7 +774,7 @@ class HealingStrategy : public RobotStrategy {
   }
 
  protected:
-  double overcharge_score(const Unit &unit) {
+  static double overcharge_score(const Unit &unit) {
     auto score = unit.get_health() / (double)unit.get_max_health();
     switch (unit.get_unit_type()) {
       case Worker:
