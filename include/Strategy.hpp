@@ -558,32 +558,37 @@ class AttackStrategy : public RobotStrategy {
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
     vector<MapLocation> target_locations;
 
+
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
       target_locations.push_back(loc);
     }
 
-    const auto targets =
-        find_targets(game_state, military_units, target_locations, distances);
 
-    unordered_map<uint16_t, unsigned> n_targetting;
-    unordered_set<unsigned> targetting;
+		const auto targets =
+			find_targets(game_state, military_units, target_locations, distances);
 
-    // Move towards target.
-    for (const auto &target : targets) {
-      if (target.distance == numeric_limits<uint16_t>::max()) continue;
+		unordered_map<uint16_t, unsigned> n_targetting;
+		unordered_set<unsigned> targetting;
 
-      const uint16_t hash = (target.x << 8) + target.y;
-      if (n_targetting[hash] >= 10) continue;
-      if (targetting.count(target.id)) continue;
+		// Move towards target.
+		for (const auto &target : targets) {
+			if (target.distance == numeric_limits<uint16_t>::max()) continue;
 
-      const auto goal = game_state.map_info.get_location(target.x, target.y);
+			const uint16_t hash = (target.x << 8) + target.y;
+			if (n_targetting[hash] >= 10) continue;
+			if (targetting.count(target.id)) continue;
 
-      n_targetting[hash]++;
-      targetting.insert(target.id);
+			const auto goal = game_state.map_info.get_location(target.x, target.y);
 
-      maybe_move(game_state, target.id, goal, distances);
-    }
+			n_targetting[hash]++;
+			targetting.insert(target.id);
+
+			maybe_move(game_state, target.id, goal, distances);
+		}
+	}
+
+
 
     // Attack nearby targets.
     for (const auto militant_id : military_units) {
