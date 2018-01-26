@@ -213,12 +213,14 @@ int main() {
         break;
     }
 
-    worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
-
-    for (int i = 0; i < constants::N_ROBOT_TYPES; i++) {
-      const auto unit_type = static_cast<UnitType>(i);
-      attack[unit_type]->run(game_state,
-                             game_state.my_units.by_type[unit_type]);
+    // Do this twice because might have overcharged.
+    for (int i = 0; i < 2; i++) {
+      worker_rush.run(game_state, game_state.my_units.by_type[Worker]);
+      for (int i = 0; i < constants::N_ROBOT_TYPES; i++) {
+        const auto unit_type = static_cast<UnitType>(i);
+        attack[unit_type]->run(game_state,
+                               game_state.my_units.by_type[unit_type]);
+      }
     }
 
     launch_rockets.run(game_state, game_state.my_units.by_type[Rocket]);
