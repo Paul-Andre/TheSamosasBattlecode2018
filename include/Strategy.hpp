@@ -367,7 +367,7 @@ class WorkerRushStrategy : public WorkerStrategy {
             if (n_max_targetting.count(hash)) continue;
 
             const auto loc = game_state.map_info.get_location(x, y);
-            target_locations.push_back(make_pair(loc, 1));
+            target_locations.push_back(make_pair(loc, 0.8));
             n_max_targetting[hash] = 1;
           }
         }
