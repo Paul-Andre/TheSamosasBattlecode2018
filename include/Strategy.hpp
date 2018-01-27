@@ -810,10 +810,9 @@ class HealingStrategy : public RobotStrategy {
       for (const Unit &unit : my_units_within_range) {
         const auto unit_id = unit.get_id();
 
-        // To heal, we must call attack()...
-        if (game_state.gc.is_attack_ready(healer_id) &&
-            game_state.gc.can_attack(healer_id, unit_id)) {
-          game_state.attack(healer_id, unit_id);
+        if (game_state.gc.is_heal_ready(healer_id) &&
+            game_state.gc.can_heal(healer_id, unit_id)) {
+          game_state.gc.heal(healer_id, unit_id);
         }
       }
 
