@@ -22,10 +22,10 @@ const static int MIN_FACTORY_COUNT = 2;
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.10,  // Worker
-    0.40,  // Knight
-    0.40,  // Ranger
+    0.35,  // Knight
+    0.35,  // Ranger
     0.00,  // Mage
-    0.00,  // Healer
+    0.10,  // Healer
     0.05,  // Factory
     0.05,  // Rocket
 }};

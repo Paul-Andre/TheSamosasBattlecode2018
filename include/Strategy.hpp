@@ -731,21 +731,45 @@ class HealingStrategy : public RobotStrategy {
   HealingStrategy(const PairwiseDistances &distances) : distances(distances) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> healers) {
-    vector<MapLocation> target_locations;
+    vector<pair<MapLocation, float>> target_locations;
 
     for (const auto &unit : game_state.my_units.by_id) {
       // We don't want healers to target themselves or eachother, otherwise they
       // can just ignore other units and clump together since we're sorting by
       // distance.
-      const auto id = unit.first;
-      if (healers.count(id)) continue;
+      if (unit.second.first == Healer) continue;
+      if (unit.second.first == Factory) continue;
+
+      float score = 1.;
+      switch (unit.second.first) {
+        case Worker:
+          score *= 10;
+          break;
+        case Factory:
+          score *= 5;
+          break;
+        case Rocket:
+          score *= 1;
+          break;
+        case Mage:
+          score *= 0.75;
+          break;
+        case Ranger:
+          score *= 0.5;
+          break;
+        case Knight:
+          score *= 1;
+          break;
+        default:
+          break;
+      }
 
       const auto loc = unit.second.second;
-      target_locations.push_back(loc);
+      target_locations.push_back(make_pair(loc, score));
     }
 
     const auto targets =
-        find_targets(game_state, healers, target_locations, distances);
+        find_targets_with_weights(game_state, healers, target_locations, distances);
 
     unordered_map<uint16_t, unsigned> n_targetting;
     unordered_set<unsigned> targetting;
