@@ -7,7 +7,7 @@ MapInfo::MapInfo(const PlanetMap &map)
     : width((int)map.get_width()),
       height((int)map.get_height()),
       planet(map.get_planet()),
-      karbonite(width, vector<unsigned>(height)),
+      karbonite(width, vector<float>(height)),
       passable_terrain(width, vector<bool>(height)),
       can_sense(width, vector<bool>(height)) {
   for (int i = 0; i < width; i++) {
@@ -38,6 +38,10 @@ void MapInfo::update(const GameController &gc) {
 
       if (is_sensible) {
         karbonite[i][j] = gc.get_karbonite_at(ml);
+      } else {
+        // Depreciate unseen karbonite.
+        karbonite[i][j] *= 0.99;
+        if (karbonite[i][j] < 1) karbonite[i][j] = 0;
       }
     }
   }
