@@ -586,15 +586,33 @@ class AttackStrategy : public RobotStrategy {
         distances(distances) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
-    vector<MapLocation> target_locations;
+    vector<pair<MapLocation, float>> target_locations;
 
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
-      target_locations.push_back(loc);
+      float score = 1.;
+      switch (unit.second.first) {
+        case Worker:
+          score *= 3;
+          break;
+        case Mage:
+          score *= 0.2;
+          break;
+        case Ranger:
+          score *= 0.3;
+        case Knight:
+          score *= 0.5;
+          break;
+        case Healer:
+          score *= 2;
+          break;
+        default:
+          break;
+      target_locations.push_back(make_pair(loc, score));
     }
 
     const auto targets =
-        find_targets(game_state, military_units, target_locations, distances);
+        find_targets_with_weights(game_state, military_units, target_locations, distances);
 
     unordered_map<uint16_t, unsigned> n_targetting;
     unordered_set<unsigned> targetting;

@@ -52,7 +52,7 @@ vector<Target> find_targets(GameState &game_state,
 
 vector<Target> find_targets_with_weights(GameState &game_state,
                             unordered_set<unsigned> units,
-                            vector<pair<MapLocation,int>> target_locations,
+                            vector<pair<MapLocation,float>> target_locations,
                             const PairwiseDistances &distances) {
   vector<Target> targets;
   for (const auto unit_id : units) {
