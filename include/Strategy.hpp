@@ -614,7 +614,7 @@ class AttackStrategy : public RobotStrategy {
       for (const auto &unit : game_state.my_units.by_id) {
         const auto loc = unit.second.second;
         if (unit.second.first == Rocket) {
-          target_locations.push_back(make_pair(loc, 1));
+          target_locations.push_back(make_pair(loc, 0.1));
         }
       }
     }
@@ -753,9 +753,9 @@ class HealingStrategy : public RobotStrategy {
     vector<pair<MapLocation, float>> target_locations;
 
     for (const auto &unit : game_state.my_units.by_id) {
-      // We don't want healers to target themselves or eachother, otherwise they
-      // can just ignore other units and clump together since we're sorting by
-      // distance.
+      // We don't want healers to target themselves or eachother, otherwise
+      // they can just ignore other units and clump together since we're
+      // sorting by distance.
       if (unit.second.first == Healer) continue;
       if (unit.second.first == Factory) continue;
 

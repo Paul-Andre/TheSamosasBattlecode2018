@@ -64,25 +64,29 @@ UnitType which_to_build(const GameState &game_state) {
     }
   }
 
+  double sum = 0;
   const double unit_count = game_state.my_units.all.size();
   array<double, constants::N_UNIT_TYPES> current_distribution_error{};
   for (int i = 0; i < constants::N_UNIT_TYPES; i++) {
-    current_distribution_error[i] =
-        target_distribution[i] -
-        game_state.my_units.by_type[i].size() / unit_count;
+    const auto error =
+        max(0.00, target_distribution[i] -
+                      game_state.my_units.by_type[i].size() / unit_count);
+    current_distribution_error[i] = error;
+    sum += error;
   }
 
-  auto max_error = 0.00;
-  UnitType unit_to_build = Worker;
+  // Sample based on error from distribution.
+  auto prob = (double)rand() / RAND_MAX;
   for (int i = 0; i < constants::N_UNIT_TYPES; i++) {
-    const auto current_error = current_distribution_error[i];
-    if (current_error > max_error) {
-      max_error = current_error;
-      unit_to_build = static_cast<UnitType>(i);
+    const auto error_prob = current_distribution_error[i] / sum;
+    if (error_prob >= prob) {
+      return static_cast<UnitType>(i);
     }
+    prob -= error_prob;
   }
 
-  return unit_to_build;
+  // Shouldn't happen.
+  return Worker;
 }
 
 int main() {
