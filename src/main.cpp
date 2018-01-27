@@ -22,12 +22,12 @@ const static int MIN_FACTORY_COUNT = 2;
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.10,  // Worker
-    0.50,  // Knight
+    0.45,  // Knight
     0.20,  // Ranger
     0.00,  // Mage
     0.15,  // Healer
     0.05,  // Factory
-    0.00,  // Rocket
+    0.05,  // Rocket
 }};
 
 bool is_being_built(const GameState &game_state, UnitType unit_type) {
@@ -44,15 +44,17 @@ UnitType which_to_build(const GameState &game_state) {
     return Worker;
   }
 
-  if (is_being_built(game_state, Factory)) {
+  if (!is_being_built(game_state, Factory)) {
     const auto factory_count = game_state.my_units.by_type[Factory].size();
     if (factory_count < MIN_FACTORY_COUNT) {
       return Factory;
     }
   }
 
-  if (game_state.round >= 400 && game_state.round % 20 == 0) {
-    return Rocket;
+  if (!is_being_built(game_state, Rocket)) {
+    if (game_state.round >= 400 && game_state.round % 50 == 0) {
+      return Rocket;
+    }
   }
 
   const double unit_count = game_state.my_units.all.size();
@@ -192,6 +194,7 @@ int main() {
                   game_state, game_state.my_units.by_type[Factory]);
               break;
             case Rocket:
+              cout << "time to build rocket" << endl;
             case Factory:
               is_successful = build[unit_type]->run(
                   game_state, game_state.my_units.by_type[Worker]);

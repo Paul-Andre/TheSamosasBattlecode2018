@@ -367,7 +367,7 @@ class WorkerRushStrategy : public WorkerStrategy {
             if (n_max_targetting.count(hash)) continue;
 
             const auto loc = game_state.map_info.get_location(x, y);
-            target_locations.push_back(make_pair(loc, 1));
+            target_locations.push_back(make_pair(loc, 0.8));
             n_max_targetting[hash] = 1;
           }
         }
@@ -606,18 +606,18 @@ class AttackStrategy : public RobotStrategy {
       float score = 1.;
       switch (unit.second.first) {
         case Worker:
-          score *= 3;
+          score *= 2;
           break;
         case Mage:
-          score *= 0.2;
+          score *= 0.5;
           break;
         case Ranger:
-          score *= 0.3;
+          score *= 0.5;
         case Knight:
           score *= 0.5;
           break;
         case Healer:
-          score *= 2;
+          score *= 0.6;
           break;
         default:
           break;
@@ -699,6 +699,9 @@ class AttackStrategy : public RobotStrategy {
         break;
       case Mage:
         score *= 0.2;
+        break;
+      case Factory:
+        score *= 0.25;
         break;
       case Ranger:
         score *= 0.3;
