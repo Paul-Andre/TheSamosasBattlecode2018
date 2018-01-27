@@ -22,10 +22,10 @@ const static int MIN_FACTORY_COUNT = 2;
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.10,  // Worker
-    0.60,  // Knight
-    0.20,  // Ranger
+    0.35,  // Knight
+    0.35,  // Ranger
     0.00,  // Mage
-    0.00,  // Healer
+    0.10,  // Healer
     0.08,  // Factory
     0.02,  // Rocket
 }};
@@ -150,10 +150,10 @@ int main() {
   // First thing get some research going
   if (game_state.PLANET == Earth) {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker (25)
+    gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
     gc.queue_research(UnitType::Knight);  // More defense (25)
     gc.queue_research(UnitType::Knight);  // More defense (75)
     gc.queue_research(UnitType::Knight);  // Javelin (100)
-    gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision (100)
     gc.queue_research(UnitType::Rocket);  // To Mars (50)
     gc.queue_research(UnitType::Healer);  // Increase healing (25)
