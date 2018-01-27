@@ -860,6 +860,8 @@ class HealingStrategy : public RobotStrategy {
 
  protected:
   static double overcharge_score(const Unit &unit) {
+    if (unit.is_structure()) return 1000;
+
     float score = 30 - unit.get_attack_cooldown();
     switch (unit.get_unit_type()) {
       case Ranger:
