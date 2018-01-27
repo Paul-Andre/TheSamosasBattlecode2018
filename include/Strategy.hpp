@@ -608,6 +608,7 @@ class AttackStrategy : public RobotStrategy {
           break;
         default:
           break;
+      }
       target_locations.push_back(make_pair(loc, score));
     }
 
