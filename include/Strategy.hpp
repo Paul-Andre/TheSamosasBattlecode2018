@@ -837,13 +837,16 @@ class HealingStrategy : public RobotStrategy {
 
  protected:
   static double overcharge_score(const Unit &unit) {
-    auto score = unit.get_health() / (double)unit.get_max_health();
+    auto score = 1;
     switch (unit.get_unit_type()) {
+      case Ranger:
+        score *= 0.5;
+        break;
       case Worker:
         score *= 5;
         break;
       case Knight:
-        score *= 0.5;
+        score *= 1;
         break;
       case Healer:
         score *= 2;
