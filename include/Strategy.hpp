@@ -361,7 +361,7 @@ class WorkerRushStrategy : public WorkerStrategy {
           for (const auto &garrison_unit_id : garrison) {
             const auto garrison_unit = game_state.gc.get_unit(garrison_unit_id);
             if (garrison_unit.get_unit_type() == Worker) {
-              worker_count ++;
+              worker_count++;
             }
           }
           n_max_targetting[hash] = 2 - worker_count;
@@ -370,7 +370,7 @@ class WorkerRushStrategy : public WorkerStrategy {
       }
       if (game_state.map_info.can_sense[x][y]) {
         n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
-          game_state.count_obstructions(x, y) + 1;
+                                 game_state.count_obstructions(x, y) + 1;
       } else {
         n_max_targetting[hash] = 10;
       }
