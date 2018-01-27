@@ -600,7 +600,6 @@ class AttackStrategy : public RobotStrategy {
       }
     }
 
-
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
       float score = 1.;
