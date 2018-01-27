@@ -595,6 +595,14 @@ class AttackStrategy : public RobotStrategy {
 
     for (const auto &unit : game_state.enemy_units.by_id) {
       const auto loc = unit.second.second;
+      if (unit.second.first == Rocket) {
+        target_locations.push_back(make_pair(loc, 1));
+      }
+    }
+
+
+    for (const auto &unit : game_state.enemy_units.by_id) {
+      const auto loc = unit.second.second;
       float score = 1.;
       switch (unit.second.first) {
         case Worker:
