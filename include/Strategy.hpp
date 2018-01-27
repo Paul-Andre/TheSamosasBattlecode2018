@@ -307,43 +307,46 @@ class WorkerRushStrategy : public WorkerStrategy {
       : distances(distances) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
-    vector<MapLocation> target_locations;
+    vector<pair<MapLocation,float>> target_locations;
 
     if (should_move_to_enemy) {
       for (const auto &unit : game_state.enemy_units.by_id) {
         const auto loc = unit.second.second;
-        target_locations.push_back(loc);
+        target_locations.push_back(make_pair(loc,0.5));
       }
     }
 
     if (should_move_to_unbuilt_rockets || should_move_to_rockets) {
       for (const auto rocket_id : game_state.my_units.by_type[Rocket]) {
+        const auto rocket_unit = game_state.gc.get_unit(rocket_id);
         if (!should_move_to_rockets) {
-          const auto rocket_unit = game_state.gc.get_unit(rocket_id);
           if (rocket_unit.structure_is_built()) continue;
         }
 
+        float score = 0.5 + 0.5 * rocket_unit.get_health()/rocket_unit.get_max_health();
+
         const auto loc = game_state.my_units.by_id[rocket_id].second;
-        target_locations.push_back(loc);
+        target_locations.push_back(make_pair(loc,score));
       }
     }
 
     if (should_move_to_unbuilt_factories || should_move_to_factories) {
       for (const auto factory_id : game_state.my_units.by_type[Factory]) {
+        const auto factory_unit = game_state.gc.get_unit(factory_id);
         if (!should_move_to_factories) {
-          const auto factory_unit = game_state.gc.get_unit(factory_id);
           if (factory_unit.structure_is_built()) continue;
         }
 
+        float score = 0.5 + 0.5 * factory_unit.get_health()/factory_unit.get_max_health();
         const auto loc = game_state.my_units.by_id[factory_id].second;
-        target_locations.push_back(loc);
+        target_locations.push_back(make_pair(loc,score));
       }
     }
 
     unordered_map<uint16_t, unsigned> n_max_targetting;
     for (const auto &loc : target_locations) {
-      const auto x = loc.get_x();
-      const auto y = loc.get_y();
+      const auto x = loc.first.get_x();
+      const auto y = loc.first.get_y();
       const uint16_t hash = (x << 8) + y;
       if (game_state.map_info.can_sense[x][y]) {
         n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
@@ -362,7 +365,7 @@ class WorkerRushStrategy : public WorkerStrategy {
             if (n_max_targetting.count(hash)) continue;
 
             const auto loc = game_state.map_info.get_location(x, y);
-            target_locations.push_back(loc);
+            target_locations.push_back(make_pair(loc,1));
             n_max_targetting[hash] = 1;
           }
         }
@@ -370,7 +373,7 @@ class WorkerRushStrategy : public WorkerStrategy {
     }
 
     const auto targets =
-        find_targets(game_state, workers, target_locations, distances);
+        find_targets_with_weights(game_state, workers, target_locations, distances);
 
     unordered_map<uint16_t, unsigned> n_targetting;
     unordered_set<unsigned> targetting;
