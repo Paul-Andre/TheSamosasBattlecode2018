@@ -22,10 +22,10 @@ const static int MIN_FACTORY_COUNT = 2;
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.10,  // Worker
-    0.35,  // Knight
-    0.35,  // Ranger
+    0.20,  // Knight
+    0.55,  // Ranger
     0.00,  // Mage
-    0.10,  // Healer
+    0.05,  // Healer
     0.05,  // Factory
     0.05,  // Rocket
 }};
@@ -152,9 +152,9 @@ int main() {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker (25)
     gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
     gc.queue_research(UnitType::Knight);  // More defense (25)
+    gc.queue_research(UnitType::Ranger);  // Larger ranger vision (100)
     gc.queue_research(UnitType::Knight);  // More defense (75)
     gc.queue_research(UnitType::Knight);  // Javelin (100)
-    gc.queue_research(UnitType::Ranger);  // Larger ranger vision (100)
     gc.queue_research(UnitType::Rocket);  // To Mars (50)
     gc.queue_research(UnitType::Worker);  // Increase build speed (75)
     gc.queue_research(UnitType::Worker);  // Increase build speed (75)
