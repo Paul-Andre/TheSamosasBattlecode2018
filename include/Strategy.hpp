@@ -768,8 +768,8 @@ class HealingStrategy : public RobotStrategy {
       target_locations.push_back(make_pair(loc, score));
     }
 
-    const auto targets =
-        find_targets_with_weights(game_state, healers, target_locations, distances);
+    const auto targets = find_targets_with_weights(game_state, healers,
+                                                   target_locations, distances);
 
     unordered_map<uint16_t, unsigned> n_targetting;
     unordered_set<unsigned> targetting;
