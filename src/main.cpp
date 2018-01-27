@@ -209,6 +209,7 @@ int main() {
         unboard.run(game_state, game_state.my_units.by_type[Factory]);
       } break;
       case Mars:
+        worker_rush.set_should_replicate(true);
         unboard.run(game_state, game_state.my_units.by_type[Rocket]);
         break;
     }
