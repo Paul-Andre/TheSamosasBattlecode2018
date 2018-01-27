@@ -607,11 +607,15 @@ class AttackStrategy : public RobotStrategy {
         case Worker:
           score *= 2;
           break;
+        case Factory:
+          score *= 0.25;
+          break;
         case Mage:
           score *= 0.5;
           break;
         case Ranger:
           score *= 0.5;
+          break;
         case Knight:
           score *= 0.5;
           break;
@@ -700,7 +704,7 @@ class AttackStrategy : public RobotStrategy {
         score *= 0.2;
         break;
       case Factory:
-        score *= 0.25;
+        score *= 0.08;
         break;
       case Ranger:
         score *= 0.3;
