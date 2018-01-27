@@ -307,12 +307,12 @@ class WorkerRushStrategy : public WorkerStrategy {
       : distances(distances) {}
 
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
-    vector<pair<MapLocation,float>> target_locations;
+    vector<pair<MapLocation, float>> target_locations;
 
     if (should_move_to_enemy) {
       for (const auto &unit : game_state.enemy_units.by_id) {
         const auto loc = unit.second.second;
-        target_locations.push_back(make_pair(loc,0.5));
+        target_locations.push_back(make_pair(loc, 0.5));
       }
     }
 
@@ -323,10 +323,11 @@ class WorkerRushStrategy : public WorkerStrategy {
           if (rocket_unit.structure_is_built()) continue;
         }
 
-        float score = 0.5 + 0.5 * rocket_unit.get_health()/rocket_unit.get_max_health();
+        float score =
+            0.5 + 0.5 * rocket_unit.get_health() / rocket_unit.get_max_health();
 
         const auto loc = game_state.my_units.by_id[rocket_id].second;
-        target_locations.push_back(make_pair(loc,score));
+        target_locations.push_back(make_pair(loc, score));
       }
     }
 
@@ -337,9 +338,10 @@ class WorkerRushStrategy : public WorkerStrategy {
           if (factory_unit.structure_is_built()) continue;
         }
 
-        float score = 0.5 + 0.5 * factory_unit.get_health()/factory_unit.get_max_health();
+        float score = 0.5 + 0.5 * factory_unit.get_health() /
+                                factory_unit.get_max_health();
         const auto loc = game_state.my_units.by_id[factory_id].second;
-        target_locations.push_back(make_pair(loc,score));
+        target_locations.push_back(make_pair(loc, score));
       }
     }
 
@@ -365,15 +367,15 @@ class WorkerRushStrategy : public WorkerStrategy {
             if (n_max_targetting.count(hash)) continue;
 
             const auto loc = game_state.map_info.get_location(x, y);
-            target_locations.push_back(make_pair(loc,1));
+            target_locations.push_back(make_pair(loc, 1));
             n_max_targetting[hash] = 1;
           }
         }
       }
     }
 
-    const auto targets =
-        find_targets_with_weights(game_state, workers, target_locations, distances);
+    const auto targets = find_targets_with_weights(game_state, workers,
+                                                   target_locations, distances);
 
     unordered_map<uint16_t, unsigned> n_targetting;
     unordered_set<unsigned> targetting;
