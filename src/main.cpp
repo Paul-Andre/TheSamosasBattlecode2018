@@ -111,8 +111,8 @@ int main() {
 
   const auto start_s = clock();
 
-  PairwiseDistances point_distances(game_state.map_info.passable_terrain,
-                                    constants::POINT_KERNEL);
+  PairwiseDistances worker_distances(game_state.map_info.passable_terrain,
+                                     constants::KERNEL[Worker]);
   PairwiseDistances ranger_attack_distances(
       game_state.map_info.passable_terrain, constants::KERNEL[Ranger]);
 
@@ -121,7 +121,7 @@ int main() {
       game_state.map_info.passable_terrain, constants::KERNEL[Mage]);
 
   // Strategies.
-  WorkerRushStrategy worker_rush(point_distances);
+  WorkerRushStrategy worker_rush(worker_distances);
   RocketLaunchingStrategy launch_rockets(game_state);
   RocketBoardingStrategy board_rockets{};
   UnboardingStrategy unboard{};
@@ -136,7 +136,7 @@ int main() {
   }};
   array<RobotStrategy *, constants::N_ROBOT_TYPES> attack = {{
       new NullRobotStrategy(),  // Workers cannot attack.
-      new AttackStrategy(Knight, point_distances),
+      new AttackStrategy(Knight, worker_distances),
       new AttackStrategy(Ranger, ranger_attack_distances),
       new AttackStrategy(Mage, mage_or_healer_distances),
       new HealingStrategy(mage_or_healer_distances),

@@ -117,8 +117,8 @@ const static array<array<unsigned, N_RESEARCH_LEVELS>, N_UNIT_TYPES>
 // XXX: magic number from the specs.
 const static vector<pair<int, int>> POINT_KERNEL = {{0, 0}};
 const static vector<pair<int, int>> KERNEL[N_UNIT_TYPES] = {
-    POINT_KERNEL,         // Worker
-    POINT_KERNEL,         // Knight
+    make_kernel(-1, 2),   // Worker
+    make_kernel(-1, 2),   // Knight
     make_kernel(10, 50),  // Ranger
     make_kernel(-1, 30),  // Mage
     make_kernel(-1, 30),  // Healer
