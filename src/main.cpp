@@ -22,10 +22,10 @@ const static int MIN_FACTORY_COUNT = 2;
 // Should at most add up to 1.
 const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.10,  // Worker
-    0.35,  // Knight
-    0.25,  // Ranger
+    0.40,  // Knight
+    0.40,  // Ranger
     0.00,  // Mage
-    0.20,  // Healer
+    0.00,  // Healer
     0.05,  // Factory
     0.05,  // Rocket
 }};
@@ -145,13 +145,13 @@ int main() {
     gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision (100)
     gc.queue_research(UnitType::Rocket);  // To Mars (50)
-    gc.queue_research(UnitType::Healer);  // Increase healing (25)
-    gc.queue_research(UnitType::Healer);  // Increase healing (100)
-    gc.queue_research(UnitType::Healer);  // Overcharge (100)
     gc.queue_research(UnitType::Worker);  // Increase build speed (75)
     gc.queue_research(UnitType::Worker);  // Increase build speed (75)
     gc.queue_research(UnitType::Worker);  // Increase build speed (75)
     gc.queue_research(UnitType::Rocket);  // Faster rockets (100)
+    gc.queue_research(UnitType::Healer);  // Increase healing (25)
+    gc.queue_research(UnitType::Healer);  // Increase healing (100)
+    gc.queue_research(UnitType::Healer);  // Overcharge (100)
     gc.queue_research(UnitType::Ranger);  // Snipe (200)
     gc.queue_research(UnitType::Mage);    // Increase attack (25)
     gc.queue_research(UnitType::Mage);    // Increase attack (25)
