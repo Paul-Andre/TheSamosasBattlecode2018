@@ -139,10 +139,10 @@ int main() {
   // First thing get some research going
   if (game_state.PLANET == Earth) {
     gc.queue_research(UnitType::Worker);  // One more karbonite per worker (25)
+    gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
     gc.queue_research(UnitType::Knight);  // More defense (25)
     gc.queue_research(UnitType::Knight);  // More defense (75)
     gc.queue_research(UnitType::Knight);  // Javelin (100)
-    gc.queue_research(UnitType::Ranger);  // Faster ranger (25)
     gc.queue_research(UnitType::Ranger);  // Larger ranger vision (100)
     gc.queue_research(UnitType::Rocket);  // To Mars (50)
     gc.queue_research(UnitType::Worker);  // Increase build speed (75)
