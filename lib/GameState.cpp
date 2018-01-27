@@ -143,6 +143,23 @@ void GameState::disintegrate(unsigned id) {
 void GameState::attack(unsigned id, unsigned target_id) {
   gc.attack(id, target_id);
   update_if_dead(target_id);
+
+  const auto unit = my_units.by_id[id];
+  if (unit.first == Healer) {
+    const auto loc = unit.second;
+    const auto unit_x = loc.get_x();
+    const auto unit_y = loc.get_y();
+    for (int i = 0; i < constants::N_DIRECTIONS_WITHOUT_CENTER; i++) {
+      const auto x = unit_x + constants::DX[i];
+      const auto y = unit_y + constants::DY[i];
+      if (!map_info.is_valid_location(x, y)) continue;
+      if (my_units.is_occupied[x][y]) {
+        update_if_dead(my_units.by_location[x][y]);
+      } else if (enemy_units.is_occupied[x][y]) {
+        update_if_dead(enemy_units.by_location[x][y]);
+      }
+    }
+  }
 }
 
 void GameState::special_attack(unsigned id, UnitType unit_type,
