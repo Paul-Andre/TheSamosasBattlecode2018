@@ -50,10 +50,10 @@ vector<Target> find_targets(GameState &game_state,
   return targets;
 }
 
-vector<Target> find_targets_with_weights(GameState &game_state,
-                            unordered_set<unsigned> units,
-                            vector<pair<MapLocation,float>> target_locations,
-                            const PairwiseDistances &distances) {
+vector<Target> find_targets_with_weights(
+    GameState &game_state, unordered_set<unsigned> units,
+    vector<pair<MapLocation, float>> target_locations,
+    const PairwiseDistances &distances) {
   vector<Target> targets;
   for (const auto unit_id : units) {
     const auto unit_loc = game_state.my_units.by_id[unit_id].second;
@@ -61,13 +61,13 @@ vector<Target> find_targets_with_weights(GameState &game_state,
     const auto unit_y = unit_loc.get_y();
 
     for (const auto &target_loc_pair : target_locations) {
-      const auto target_loc  = target_loc_pair.first;
-      const auto weight  = target_loc_pair.second;
+      const auto target_loc = target_loc_pair.first;
+      const auto weight = target_loc_pair.second;
       const auto target_x = target_loc.get_x();
       const auto target_y = target_loc.get_y();
 
-      float distance = weight *
-          distances.get_distance(unit_x, unit_y, target_x, target_y);
+      float distance =
+          weight * distances.get_distance(unit_x, unit_y, target_x, target_y);
 
       Target curr_target{distance, unit_id, static_cast<uint8_t>(target_x),
                          static_cast<uint8_t>(target_y)};
