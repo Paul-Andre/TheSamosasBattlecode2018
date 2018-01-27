@@ -30,6 +30,8 @@ const static array<double, constants::N_UNIT_TYPES> target_distribution = {{
     0.05,  // Rocket
 }};
 
+bool waiting_to_build_rocket = false;
+
 bool is_being_built(const GameState &game_state, UnitType unit_type) {
   for (const auto unit_id : game_state.my_units.by_type[unit_type]) {
     const auto unit = game_state.gc.get_unit(unit_id);
@@ -40,6 +42,17 @@ bool is_being_built(const GameState &game_state, UnitType unit_type) {
 
 UnitType which_to_build(const GameState &game_state) {
   const auto worker_count = game_state.my_units.by_type[Worker].size();
+  if (waiting_to_build_rocket && worker_count >= 1) {
+    return Rocket;
+  }
+
+  if (!is_being_built(game_state, Rocket)) {
+    if (game_state.round >= 400 && game_state.round % 50 == 0) {
+      waiting_to_build_rocket = true;
+      return Rocket;
+    }
+  }
+
   if (worker_count < MIN_WORKER_COUNT) {
     return Worker;
   }
@@ -48,12 +61,6 @@ UnitType which_to_build(const GameState &game_state) {
     const auto factory_count = game_state.my_units.by_type[Factory].size();
     if (factory_count < MIN_FACTORY_COUNT) {
       return Factory;
-    }
-  }
-
-  if (!is_being_built(game_state, Rocket)) {
-    if (game_state.round >= 400 && game_state.round % 50 == 0) {
-      return Rocket;
     }
   }
 
@@ -194,7 +201,10 @@ int main() {
                   game_state, game_state.my_units.by_type[Factory]);
               break;
             case Rocket:
-              cout << "time to build rocket" << endl;
+              is_successful = build[unit_type]->run(
+                  game_state, game_state.my_units.by_type[Worker]);
+              if (is_successful) waiting_to_build_rocket = false;
+              break;
             case Factory:
               is_successful = build[unit_type]->run(
                   game_state, game_state.my_units.by_type[Worker]);
