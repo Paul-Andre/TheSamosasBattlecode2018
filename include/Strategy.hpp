@@ -829,10 +829,12 @@ class HealingStrategy : public RobotStrategy {
 
       for (const Unit &unit : my_units_within_range) {
         const auto unit_id = unit.get_id();
+        if (unit.get_health() == unit.get_max_health()) continue;
 
         if (game_state.gc.is_heal_ready(healer_id) &&
             game_state.gc.can_heal(healer_id, unit_id)) {
           game_state.gc.heal(healer_id, unit_id);
+          break;
         }
       }
 
