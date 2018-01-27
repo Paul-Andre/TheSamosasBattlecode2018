@@ -51,8 +51,10 @@ UnitType which_to_build(const GameState &game_state) {
     }
   }
 
-  if (game_state.round >= 400 && game_state.round % 20 == 0) {
-    return Rocket;
+  if (is_being_built(game_state, Rocket)) {
+    if (game_state.round >= 400 && game_state.round % 20 == 0) {
+      return Rocket;
+    }
   }
 
   const double unit_count = game_state.my_units.all.size();
