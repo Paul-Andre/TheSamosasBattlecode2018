@@ -350,9 +350,27 @@ class WorkerRushStrategy : public WorkerStrategy {
       const auto x = loc.first.get_x();
       const auto y = loc.first.get_y();
       const uint16_t hash = (x << 8) + y;
+
+      const auto unit_id = game_state.my_units.by_location[x][y];
+
+      if (game_state.my_units.by_id[unit_id].first == Rocket) {
+        const auto unit = game_state.gc.get_unit(unit_id);
+        if (unit.structure_is_built()) {
+          const vector<unsigned> garrison = unit.get_structure_garrison();
+          int worker_count = 0;
+          for (const auto &garrison_unit_id : garrison) {
+            const auto garrison_unit = game_state.gc.get_unit(garrison_unit_id);
+            if (garrison_unit.get_unit_type() == Worker) {
+              worker_count ++;
+            }
+          }
+          n_max_targetting[hash] = 2 - worker_count;
+          continue;
+        }
+      }
       if (game_state.map_info.can_sense[x][y]) {
         n_max_targetting[hash] = constants::N_DIRECTIONS_WITHOUT_CENTER -
-                                 game_state.count_obstructions(x, y) + 1;
+          game_state.count_obstructions(x, y) + 1;
       } else {
         n_max_targetting[hash] = 10;
       }
