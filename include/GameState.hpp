@@ -44,7 +44,7 @@ struct GameState {
   void launch(unsigned rocket_id, const MapLocation& loc);
   void attack(unsigned id, unsigned target_id);
   void disintegrate(unsigned id);
-  void special_attack(unsigned id, UnitType unit_type, unsigned target_id);
+  bool special_attack(unsigned id, UnitType unit_type, unsigned target_id);
 
   inline bool can_special_attack(UnitType unit_type) {
     return unit_type == Knight || unit_type == Healer;

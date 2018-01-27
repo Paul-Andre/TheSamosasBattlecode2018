@@ -162,7 +162,7 @@ void GameState::attack(unsigned id, unsigned target_id) {
   }
 }
 
-void GameState::special_attack(unsigned id, UnitType unit_type,
+bool GameState::special_attack(unsigned id, UnitType unit_type,
                                unsigned target_id) {
   switch (unit_type) {
     case Worker:
@@ -171,6 +171,7 @@ void GameState::special_attack(unsigned id, UnitType unit_type,
       if (gc.can_javelin(id, target_id) && gc.is_javelin_ready(id)) {
         gc.javelin(id, target_id);
         update_if_dead(target_id);
+        return true;
       }
       break;
     case Ranger:
@@ -180,11 +181,13 @@ void GameState::special_attack(unsigned id, UnitType unit_type,
     case Healer:
       if (gc.can_overcharge(id, target_id) && gc.is_overcharge_ready(id)) {
         gc.overcharge(id, target_id);
+        return true;
       }
       break;
     default:
       break;
   }
+  return false;
 }
 
 void GameState::harvest(unsigned id, Direction dir) {

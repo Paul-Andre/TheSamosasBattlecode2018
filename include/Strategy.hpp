@@ -810,6 +810,7 @@ class HealingStrategy : public RobotStrategy {
     }
 
     // Heal nearby targets.
+    unordered_set<unsigned> has_been_overcharged;
     for (const auto healer_id : healers) {
       if (!targetting.count(healer_id)) {
         maybe_move_randomly(game_state, healer_id);
@@ -845,7 +846,11 @@ class HealingStrategy : public RobotStrategy {
 
         for (const Unit &unit : my_units_within_range) {
           const auto unit_id = unit.get_id();
-          game_state.special_attack(healer_id, Healer, unit_id);
+          if (has_been_overcharged.count(unit_id)) continue;
+          if (game_state.special_attack(healer_id, Healer, unit_id)) {
+            has_been_overcharged.insert(unit_id);
+            break;
+          }
         }
       }
     }
