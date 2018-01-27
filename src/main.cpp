@@ -197,7 +197,8 @@ int main() {
           const auto unit_type = which_to_build(game_state);
           switch (unit_type) {
             case Worker:
-              if (game_state.my_units.by_type[Worker].size()) {
+              if (game_state.my_units.by_type[Worker].size() < 3 ||
+                  game_state.my_units.by_type[Factory].size() == 0) {
                 // Favor creating workers by replicating because faster.
                 worker_rush.set_should_replicate(true);
                 break;
