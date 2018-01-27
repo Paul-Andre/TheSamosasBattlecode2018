@@ -20,13 +20,6 @@ class Strategy {
   virtual bool run(GameState &game_state, unordered_set<unsigned> units) = 0;
 };
 
-class NullStrategy : public Strategy {
- public:
-  bool run(GameState &game_state, unordered_set<unsigned> units) {
-    return true;
-  }
-};
-
 class RobotStrategy : public Strategy {
  protected:
   bool should_move_to_enemy = true;
@@ -92,6 +85,13 @@ class RobotStrategy : public Strategy {
       return true;
     }
     return false;
+  }
+};
+
+class NullRobotStrategy : public RobotStrategy {
+ public:
+  bool run(GameState &game_state, unordered_set<unsigned> units) {
+    return true;
   }
 };
 
@@ -500,7 +500,6 @@ class BuildingStrategy : public WorkerStrategy {
 
   bool run(GameState &game_state, unordered_set<unsigned> workers) {
     // FIXME: At least build randomly / safely instead of first that can.
-
     for (const auto worker_id : workers) {
       if (maybe_blueprint(game_state, worker_id, unit_type)) return true;
     }
@@ -593,10 +592,12 @@ class AttackStrategy : public RobotStrategy {
   bool run(GameState &game_state, unordered_set<unsigned> military_units) {
     vector<pair<MapLocation, float>> target_locations;
 
-    for (const auto &unit : game_state.enemy_units.by_id) {
-      const auto loc = unit.second.second;
-      if (unit.second.first == Rocket) {
-        target_locations.push_back(make_pair(loc, 1));
+    if (should_move_to_rockets) {
+      for (const auto &unit : game_state.my_units.by_id) {
+        const auto loc = unit.second.second;
+        if (unit.second.first == Rocket) {
+          target_locations.push_back(make_pair(loc, 1));
+        }
       }
     }
 

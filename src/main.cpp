@@ -130,8 +130,8 @@ int main() {
       new BuildingStrategy(Factory),
       new BuildingStrategy(Rocket),
   }};
-  array<Strategy *, constants::N_ROBOT_TYPES> attack = {{
-      new NullStrategy(),  // Workers cannot attack.
+  array<RobotStrategy *, constants::N_ROBOT_TYPES> attack = {{
+      new NullRobotStrategy(),  // Workers cannot attack.
       new AttackStrategy(Knight, point_distances),
       new AttackStrategy(Ranger, ranger_attack_distances),
       new AttackStrategy(Mage, mage_or_healer_distances),
@@ -165,6 +165,14 @@ int main() {
     gc.queue_research(UnitType::Mage);    // Increase attack (25)
     gc.queue_research(UnitType::Mage);    // Increase attack (25)
     gc.queue_research(UnitType::Rocket);  // Increased capacity (100)
+  }
+
+  if (game_state.PLANET == Mars) {
+    worker_rush.set_should_replicate(true);
+    worker_rush.set_should_move_to_rockets(false);
+    for (int i = 1; i < constants::N_ROBOT_TYPES; i++) {
+      attack[i]->set_should_move_to_rockets(false);
+    }
   }
 
   while (true) {
@@ -222,7 +230,6 @@ int main() {
         unboard.run(game_state, game_state.my_units.by_type[Factory]);
       } break;
       case Mars:
-        worker_rush.set_should_replicate(true);
         unboard.run(game_state, game_state.my_units.by_type[Rocket]);
         break;
     }
