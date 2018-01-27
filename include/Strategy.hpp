@@ -752,7 +752,7 @@ class HealingStrategy : public RobotStrategy {
       if (target.distance == numeric_limits<uint16_t>::max()) continue;
 
       const uint16_t hash = (target.x << 8) + target.y;
-      if (n_targetting[hash] >= 10) continue;
+      if (n_targetting[hash] >= 1) continue;
       if (targetting.count(target.id)) continue;
 
       const auto goal = game_state.map_info.get_location(target.x, target.y);
