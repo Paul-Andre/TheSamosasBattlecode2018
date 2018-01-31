@@ -17,15 +17,15 @@ Direction silly_pathfinding(GameState &game_state, const MapLocation &start,
   int unit_x = start.get_x();
   int unit_y = start.get_y();
 
-  int x = goal.get_x();
-  int y = goal.get_y();
+  const auto x = goal.get_x();
+  const auto y = goal.get_y();
 
   // Used to sort by distance and then by random
   vector<pair<pair<unsigned short, int>, int>> v;
   for (int k = 0; k < constants::N_DIRECTIONS; k++) {
     const auto xx = unit_x + constants::DX[k];
     const auto yy = unit_y + constants::DY[k];
-    v.push_back(make_pair(make_pair(pd.get_distance(x, y, xx, yy), rand()), k));
+    v.push_back(make_pair(make_pair(pd.get_distance(xx, yy, x, y), rand()), k));
   }
 
   const auto current_distance = v[Center].first.first;

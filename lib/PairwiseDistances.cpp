@@ -84,21 +84,22 @@ PairwiseDistances::PairwiseDistances(
   }
 }
 
-unsigned short PairwiseDistances::get_distance(int ax, int ay, int bx,
-                                               int by) const {
-  if ((ax < 0 || ax >= width || ay < 0 || ay >= height) ||
-      (bx < 0 || bx >= width || by < 0 || by >= height)) {
+unsigned short PairwiseDistances::get_distance(int start_x, int start_y,
+                                               int goal_x, int goal_y) const {
+  if ((start_x < 0 || start_x >= width || start_y < 0 || start_y >= height) ||
+      (goal_x < 0 || goal_x >= width || goal_y < 0 || goal_y >= height)) {
     return std::numeric_limits<unsigned short>::max();
   }
-  return (*distances)[ax][ay][bx][by];
+  return (*distances)[goal_x][goal_y][start_x][start_y];
 }
-unsigned short PairwiseDistances::get_distance(const MapLocation &A,
-                                               const MapLocation &B) const {
-  int ax = A.get_x();
-  int ay = A.get_y();
-  int bx = B.get_x();
-  int by = B.get_y();
-  return get_distance(ax, ay, bx, by);
+
+unsigned short PairwiseDistances::get_distance(const MapLocation &start,
+                                               const MapLocation &goal) const {
+  const auto start_x = start.get_x();
+  const auto start_y = start.get_y();
+  const auto goal_x = goal.get_x();
+  const auto goal_y = goal.get_y();
+  return get_distance(start_x, start_y, goal_x, goal_y);
 }
 
 PairwiseDistances::~PairwiseDistances() { free(distances); }
